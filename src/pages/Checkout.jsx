@@ -1,7 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, CreditCard, CheckCircle2, ChevronRight, ShoppingBag, Loader2, Check } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
@@ -12,7 +12,7 @@ const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onr
 
 const PAYMENT_MODES = [
   { id: 'COD', label: 'Cash on Delivery', sub: 'Pay when your order arrives', icon: '💵' },
-  { id: 'ONLINE', label: 'Online Payment', sub: 'UPI, Card, Net Banking via Razorpay', icon: '💳' },
+  { id: 'ONLINE', label: 'Online Payment', sub: 'Cards, Wallets, Apple/Google Pay via Stripe', icon: '💳' },
 ];
 
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
@@ -28,19 +28,11 @@ function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   return R * c; 
 }
 
-// Dynamically load Razorpay checkout script
-const loadRazorpay = () =>
-  new Promise((resolve) => {
-    if (window.Razorpay) { resolve(true); return; }
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
+// Removed razorpay script loader
 
 export const Checkout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   // 1: Address, 2: Order Summary, 3: Payment, 4: Success
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedPayment, setSelectedPayment] = useState('ONLINE');
@@ -51,6 +43,38 @@ export const Checkout = () => {
   const { token, user, openAuthModal } = useContext(AuthContext);
   const { savedAddresses, currentLocation, selectLocation, shopLocation } = useContext(LocationContext);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  // Check for Stripe Checkout success return
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const session_id = params.get('session_id');
+    const returned_order_id = params.get('order_id');
+    
+    if (session_id && returned_order_id) {
+      setPlacingOrder(true);
+      setCurrentStep(3); // To show loading state if needed
+      
+      axios.post(`${API}/orders/verify-payment`, {
+        session_id,
+        order_id: returned_order_id
+      })
+      .then(() => {
+        clearCart();
+        setOrderId(returned_order_id);
+        setCurrentStep(4);
+        // Clear URL
+        navigate('/checkout', { replace: true });
+      })
+      .catch(err => {
+        console.error('Stripe Verification failed', err);
+        alert('Payment verification failed. Please contact support.');
+        setCurrentStep(3);
+      })
+      .finally(() => {
+        setPlacingOrder(false);
+      });
+    }
+  }, [location, navigate, clearCart]);
 
   const total = getCartTotal();
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -87,34 +111,9 @@ export const Checkout = () => {
       });
       const createdOrder = res.data;
 
-      if (selectedPayment === 'ONLINE' && createdOrder.razorpay_order_id) {
-        const loaded = await loadRazorpay();
-        if (!loaded) { alert('Failed to load payment gateway. Please try again.'); setPlacingOrder(false); return; }
-
-        const options = {
-          key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_placeholder',
-          amount: Math.round(total * 100), // paise
-          currency: 'INR',
-          name: 'OneBasket',
-          description: `Order #${createdOrder._id}`,
-          order_id: createdOrder.razorpay_order_id,
-          handler: async (response) => {
-            await axios.post(`${API}/orders/verify-payment`, {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
-            clearCart();
-            setOrderId(createdOrder._id);
-            setCurrentStep(4);
-          },
-          prefill: { name: user?.full_name, email: user?.email },
-          theme: { color: '#2874f0' },
-          modal: { ondismiss: () => setPlacingOrder(false) },
-        };
-
-        const rzp = new window.Razorpay(options);
-        rzp.open();
+      if (selectedPayment === 'ONLINE' && createdOrder.stripe_url) {
+        // Redirect to Stripe Checkout page
+        window.location.href = createdOrder.stripe_url;
         return;
       }
 
