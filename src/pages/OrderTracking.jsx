@@ -6,7 +6,7 @@ import { ArrowLeft, MapPin, Clock, Package, CheckCircle2, Truck, Loader2, XCircl
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 
-const API = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`;
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
 
 const STATUS_STEPS = [
   { id: 'placed', label: 'Order Placed', icon: Package },

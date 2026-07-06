@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ShoppingCart, IndianRupee, AlertTriangle, Bike, Clock, Settings, Save, Loader2, CheckCircle2, X } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`;
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
 
 export const DashboardTab = ({ token, onNavigate }) => {
   const [stats, setStats] = useState(null);

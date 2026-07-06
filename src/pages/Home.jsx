@@ -55,8 +55,8 @@ const Home = () => {
     const fetchData = async () => {
       try {
         const [catRes, prodRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/categories/`),
-          axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/products?limit=100`)
+          axios.get(`${import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com'}/api/categories/`),
+          axios.get(`${import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com'}/api/products?limit=100`)
         ]);
         setCategories(catRes.data);
         setProducts(prodRes.data);

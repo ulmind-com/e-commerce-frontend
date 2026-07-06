@@ -7,7 +7,7 @@ const STORAGE_KEY = 'onebasket_location';
 // Use backend API for reverse geocoding
 async function reverseGeocode(lat, lng) {
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`}/api/location/reverse-geocode?lat=${lat}&lng=${lng}`);
+    const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com'}`}/api/location/reverse-geocode?lat=${lat}&lng=${lng}`);
     const data = await res.json();
     return data.area || data.display || 'Your Location';
   } catch {

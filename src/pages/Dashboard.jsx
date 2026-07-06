@@ -4,7 +4,7 @@ import { Search, Mic, MicOff, MapPin, Grid as GridIcon, ArrowRight, Loader2, X }
 import { useNavigate } from 'react-router-dom';
 import { ProductCard } from '../components/ui/ProductCard';
 
-const API = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`;
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
 
 // Category config — slug must match backend slug
 const CATEGORY_CONFIG = [

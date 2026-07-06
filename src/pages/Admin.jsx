@@ -16,7 +16,7 @@ import { TodayOrdersTab } from './admin/TodayOrdersTab';
 import { SettingsTab } from './admin/SettingsTab';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 
-const API = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`;
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
 
 // ─── Image Upload Zone ──────────────────────────────────────────────────────
 const ImageUploadZone = ({ productId, token, onUploaded }) => {

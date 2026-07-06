@@ -8,7 +8,7 @@ import { AuthContext } from '../context/AuthContext';
 import { LocationContext } from '../context/LocationContext';
 import { LocationDrawer } from '../components/LocationDrawer';
 
-const API = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`;
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
 
 const PAYMENT_MODES = [
   { id: 'COD', label: 'Cash on Delivery', sub: 'Pay when your order arrives', icon: '💵' },

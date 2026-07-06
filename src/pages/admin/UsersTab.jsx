@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { MapPin, User, Mail, Shield, Bike, Loader2, X, Phone } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`;
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
 
 export const UsersTab = ({ token }) => {
   const [users, setUsers] = useState([]);
