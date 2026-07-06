@@ -141,7 +141,7 @@ export const LocationDrawer = ({ isOpen, onClose }) => {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[200]">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -151,95 +151,94 @@ export const LocationDrawer = ({ isOpen, onClose }) => {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
 
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="relative bg-white w-full max-w-[480px] rounded-xl shadow-2xl overflow-hidden flex flex-col"
-          >
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-              <span className="text-sm font-semibold text-slate-600">
-                Welcome to <span className="text-primary font-extrabold tracking-tight">OneBasket</span>
-              </span>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              
-              <div className="flex items-start gap-4 mb-6">
-                <div className="mt-1 flex-shrink-0">
-                  <MapPin size={24} className="text-slate-700" />
-                </div>
-                <p className="text-slate-600 font-medium text-[15px] leading-relaxed">
-                  Please provide your delivery location to see products at nearby store
-                </p>
+          {/* Modal Container positioned at top-left under the navbar */}
+          <div className="absolute top-[80px] left-4 md:left-[280px] z-[210] w-[calc(100%-32px)] md:w-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              className="bg-white w-full md:w-[500px] rounded-xl shadow-2xl overflow-hidden flex flex-col"
+            >
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-slate-100 bg-white flex items-center justify-between">
+                <span className="text-sm text-slate-500">
+                  Welcome to <span className="text-primary font-extrabold tracking-tight">OneBasket</span>
+                </span>
               </div>
 
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm font-medium rounded-lg border border-red-100">
-                  {error}
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center gap-4 relative">
-                
-                <button
-                  onClick={handleUseCurrentLocation}
-                  disabled={loading}
-                  className="w-full sm:w-auto flex-shrink-0 bg-[#0c831f] hover:bg-[#0a6f1a] text-white px-6 py-3.5 rounded-lg font-bold transition-colors flex items-center justify-center gap-2 shadow-sm"
-                >
-                  {loading ? <Loader2 size={18} className="animate-spin" /> : 'Detect my location'}
-                </button>
-
-                <div className="flex items-center justify-center text-slate-400 text-xs font-semibold px-2">
-                  <span className="bg-white px-2 z-10 text-slate-300 border border-slate-200 rounded-full py-1">OR</span>
-                </div>
-
-                <div className="w-full relative flex-1">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search size={18} className="text-slate-400" />
+              {/* Content */}
+              <div className="p-6">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="mt-1 flex-shrink-0">
+                    <MapPin size={24} className="text-slate-700" />
                   </div>
-                  <input
-                    type="text"
-                    placeholder="search delivery location"
-                    value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3.5 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0c831f] focus:ring-1 focus:ring-[#0c831f] transition-all"
-                  />
-                  
-                  {/* Search Results Dropdown */}
-                  {searchQuery && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-100 shadow-xl rounded-lg max-h-60 overflow-y-auto z-50">
-                      {isSearching ? (
-                        <div className="p-4 text-center">
-                          <Loader2 size={20} className="animate-spin mx-auto text-primary" />
+                  <p className="text-slate-600 font-medium text-[15px] leading-relaxed">
+                    Please provide your delivery location to see products at nearby store
+                  </p>
+                </div>
+
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm font-medium rounded-lg border border-red-100">
+                    {error}
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row items-center gap-4 relative">
+                  <button
+                    onClick={handleUseCurrentLocation}
+                    disabled={loading}
+                    className="w-full sm:w-auto flex-shrink-0 bg-[#0c831f] hover:bg-[#0a6f1a] text-white px-5 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 text-sm"
+                  >
+                    {loading ? <Loader2 size={16} className="animate-spin" /> : 'Detect my location'}
+                  </button>
+
+                  <div className="flex items-center justify-center text-slate-300 text-xs px-1">
+                    <span className="bg-white px-2 z-10 border border-slate-200 rounded-full py-1">OR</span>
+                  </div>
+
+                  <div className="w-full relative flex-1">
+                    <input
+                      type="text"
+                      placeholder="search delivery location"
+                      value={searchQuery}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-300 transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Integrated Search Results */}
+              {searchQuery && (
+                <div className="border-t border-slate-100 max-h-[350px] overflow-y-auto bg-white flex flex-col">
+                  {isSearching ? (
+                    <div className="p-6 text-center">
+                      <Loader2 size={24} className="animate-spin mx-auto text-primary" />
+                    </div>
+                  ) : searchResults.length > 0 ? (
+                    searchResults.map((res) => (
+                      <button
+                        key={res.place_id}
+                        onClick={() => selectSearchResult(res)}
+                        className="w-full text-left px-6 py-4 border-b border-slate-50 hover:bg-slate-50 transition-colors flex items-start gap-4"
+                      >
+                        <MapPin size={18} className="text-slate-400 mt-1 flex-shrink-0" />
+                        <div className="flex flex-col overflow-hidden">
+                          <span className="font-bold text-slate-700 text-sm truncate uppercase tracking-tight">{res.display_name.split(',')[0]}</span>
+                          <span className="text-[13px] text-slate-500 line-clamp-2 mt-0.5 leading-snug">{res.display_name}</span>
                         </div>
-                      ) : searchResults.length > 0 ? (
-                        searchResults.map((res) => (
-                          <button
-                            key={res.place_id}
-                            onClick={() => selectSearchResult(res)}
-                            className="w-full text-left px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors flex flex-col"
-                          >
-                            <span className="font-semibold text-slate-800 text-sm truncate w-full">{res.display_name.split(',')[0]}</span>
-                            <span className="text-xs text-slate-500 line-clamp-1 mt-0.5">{res.display_name}</span>
-                          </button>
-                        ))
-                      ) : (
-                        <div className="p-4 text-center text-sm text-slate-500">
-                          No results found
-                        </div>
-                      )}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="p-6 text-center text-sm text-slate-500">
+                      No results found
                     </div>
                   )}
                 </div>
-              </div>
-
-            </div>
-          </motion.div>
+              )}
+            </motion.div>
+          </div>
         </div>
       )}
     </AnimatePresence>
