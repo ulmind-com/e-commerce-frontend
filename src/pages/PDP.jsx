@@ -13,7 +13,7 @@ import {
 import { ProductCard } from '../components/ui/ProductCard';
 import { ReviewModal } from '../components/ReviewModal';
 
-const API = 'http://localhost:8000';
+const API = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`;
 
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   if (!lat1 || !lon1 || !lat2 || !lon2) return null;

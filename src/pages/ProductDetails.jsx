@@ -12,7 +12,7 @@ export const ProductDetails = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/products/${id}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`}/api/products/${id}`);
         if (!res.ok) throw new Error('Not found');
         const data = await res.json();
         setProduct({

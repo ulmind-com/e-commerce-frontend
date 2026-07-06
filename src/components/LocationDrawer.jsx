@@ -19,7 +19,7 @@ L.Icon.Default.mergeOptions({
 // Reverse Geocoding helper
 async function reverseGeocode(lat, lng) {
   try {
-    const res = await fetch(`http://localhost:8000/api/location/reverse-geocode?lat=${lat}&lng=${lng}`);
+    const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`}/api/location/reverse-geocode?lat=${lat}&lng=${lng}`);
     return await res.json();
   } catch (e) {
     return { area: 'Server Offline', display: 'Please ask AI to restart the servers.' };
@@ -108,28 +108,9 @@ export const LocationDrawer = ({ isOpen, onClose }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [formError, setFormError] = useState('');
+  const [hasAutoFetched, setHasAutoFetched] = useState(false);
 
-  // Reset view when opened
-  useEffect(() => {
-    if (isOpen) {
-      setView('list');
-      setEditingId(null);
-      setAddressToDelete(null);
-      setFormError('');
-      setForm({ 
-        flat: '', 
-        buildingName: '', 
-        landmark: '', 
-        label: 'Home', 
-        buildingType: 'Society', 
-        receiverName: user?.full_name || '', 
-        receiverNumber: user?.phone || '+91 ' 
-      });
-      setMapPos(null);
-    }
-  }, [isOpen, user]);
-
-  const handleUseCurrentLocation = () => {
+  const handleUseCurrentLocation = React.useCallback(() => {
     setLoading(true);
     setFormError('');
     navigator.geolocation.getCurrentPosition(
@@ -163,7 +144,35 @@ export const LocationDrawer = ({ isOpen, onClose }) => {
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
-  };
+  }, []);
+
+  // Reset view when opened
+  useEffect(() => {
+    if (isOpen) {
+      setView('list');
+      setEditingId(null);
+      setAddressToDelete(null);
+      setFormError('');
+      setForm({ 
+        flat: '', 
+        buildingName: '', 
+        landmark: '', 
+        label: 'Home', 
+        buildingType: 'Society', 
+        receiverName: user?.full_name || '', 
+        receiverNumber: user?.phone || '+91 ' 
+      });
+      setMapPos(null);
+      setHasAutoFetched(false);
+    }
+  }, [isOpen, user]);
+
+  useEffect(() => {
+    if (isOpen && !hasAutoFetched && !currentLocation && savedAddresses.length === 0) {
+      setHasAutoFetched(true);
+      handleUseCurrentLocation();
+    }
+  }, [isOpen, hasAutoFetched, currentLocation, savedAddresses, handleUseCurrentLocation]);
 
   const handleMapPinChanged = async (latlng) => {
     const geo = await reverseGeocode(latlng.lat, latlng.lng);
@@ -175,7 +184,7 @@ export const LocationDrawer = ({ isOpen, onClose }) => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/location/search?q=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`}/api/location/search?q=${encodeURIComponent(searchQuery)}`);
       const data = await res.json();
       setSearchResults(data);
     } catch (e) {

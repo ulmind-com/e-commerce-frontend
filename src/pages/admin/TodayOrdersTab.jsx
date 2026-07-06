@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Loader2, Check, X, ArrowRight, Package } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+const API = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`;
 
 export const TodayOrdersTab = ({ token }) => {
   const [orders, setOrders] = useState([]);

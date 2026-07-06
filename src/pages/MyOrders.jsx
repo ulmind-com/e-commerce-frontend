@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Package, ArrowRight, Loader2, ArrowLeft, CheckCircle2, XCircle, MapPin } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 
-const API = 'http://localhost:8000';
+const API = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`;
 
 export const MyOrders = () => {
   const { token, user } = useContext(AuthContext);

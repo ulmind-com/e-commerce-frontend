@@ -55,8 +55,8 @@ const Home = () => {
     const fetchData = async () => {
       try {
         const [catRes, prodRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/categories/'),
-          axios.get('http://localhost:8000/api/products?limit=100')
+          axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/categories/`),
+          axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/products?limit=100`)
         ]);
         setCategories(catRes.data);
         setProducts(prodRes.data);

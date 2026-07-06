@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, Loader2 } from 'lucide-react';
 import axios from 'axios';
 
-const API = 'http://localhost:8000';
+const API = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`;
 
 export const ReviewModal = ({ isOpen, onClose, productId, token, onReviewAdded }) => {
   const [rating, setRating] = useState(0);

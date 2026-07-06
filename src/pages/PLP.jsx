@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { ProductCard } from '../components/ui/ProductCard';
 
-const API = 'http://localhost:8000';
+const API = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}`;
 
 const SORT_OPTIONS = [
   { label: 'Relevance', value: '' },
