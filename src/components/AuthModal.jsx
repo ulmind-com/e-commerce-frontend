@@ -204,12 +204,13 @@ export const AuthModal = ({ isOpen, onClose }) => {
                   <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="email"
+                    name="new-email-field"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     className="w-full pl-9 pr-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                     required
-                    autoComplete="email"
+                    autoComplete="off"
                   />
                 </div>
               </div>
@@ -220,12 +221,13 @@ export const AuthModal = ({ isOpen, onClose }) => {
                   <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type={showPass ? 'text' : 'password'}
+                    name="new-password-field"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     className="w-full pl-9 pr-10 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                     required
-                    autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
+                    autoComplete="new-password"
                     minLength={6}
                   />
                   <button
