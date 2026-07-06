@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, Info, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Clock, Info, Sparkles } from 'lucide-react';
 import { AddToCartButton } from '../components/ui/AddToCartButton';
+import { ProductCard } from '../components/ui/ProductCard';
 
 export const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
+  const [similarProducts, setSimilarProducts] = useState([]);
+  const [loadingSimilar, setLoadingSimilar] = useState(true);
 
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchProductAndSimilar = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api'}`}/products/${id}`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api'}/products/${id}`);
         if (!res.ok) throw new Error('Not found');
         const data = await res.json();
         setProduct({
@@ -21,19 +24,29 @@ export const ProductDetails = () => {
           imageUrls: data.image_urls || data.imageUrls || [],
           nutritionalInfo: data.nutritionalInfo || { Calories: '—', Fat: '—', Carbs: '—', Protein: '—' },
         });
-      } catch {
-        // Fallback demo product
-        setProduct({
-          id: id || '1',
-          title: 'Organic Avocados',
-          description: 'Premium hand-picked Hass avocados. Perfect for guacamole or toast.',
-          price: 299,
-          imageUrls: [],
-          nutritionalInfo: { Calories: '160', Fat: '15g', Carbs: '9g', Protein: '2g' },
-        });
+      } catch (err) {
+        console.error("Error fetching product", err);
+      }
+      
+      try {
+        setLoadingSimilar(true);
+        const simRes = await fetch(`${import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api'}/products/${id}/similar`);
+        if (simRes.ok) {
+          const simData = await simRes.json();
+          const mapped = simData.map(p => ({
+            ...p,
+            id: p._id || p.id,
+            imageUrls: p.image_urls || p.imageUrls || []
+          }));
+          setSimilarProducts(mapped);
+        }
+      } catch (err) {
+        console.error("Error fetching similar products", err);
+      } finally {
+        setLoadingSimilar(false);
       }
     };
-    fetchProduct();
+    fetchProductAndSimilar();
   }, [id]);
 
   if (!product) {
@@ -111,6 +124,36 @@ export const ProductDetails = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Similar Products Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        className="mt-24"
+      >
+        <div className="flex items-center gap-3 mb-8">
+          <Sparkles className="text-primary" size={28} />
+          <h2 className="text-3xl font-extrabold tracking-tight">Similar Products</h2>
+        </div>
+        
+        {loadingSimilar ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="animate-pulse h-64 bg-white/5 rounded-2xl"></div>
+            ))}
+          </div>
+        ) : similarProducts.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {similarProducts.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-muted-foreground">No similar products found right now.</p>
+        )}
+      </motion.div>
+
     </motion.div>
   );
 };
