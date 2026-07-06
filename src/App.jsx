@@ -64,7 +64,9 @@ const Navbar = ({ onCartClick, onAuthClick, onLocationClick }) => {
             Delivery in 10 minutes
           </div>
           <div className="text-sm text-slate-500 flex items-center gap-1 max-w-[200px]">
-            <span className="truncate">{currentLocation?.label || 'Select your location'}</span>
+            <span className="truncate">
+              {currentLocation ? (currentLocation.area || currentLocation.address || currentLocation.label) : 'Select your location'}
+            </span>
             <ChevronDown size={14} className="text-slate-400 group-hover:text-slate-900 shrink-0" />
           </div>
         </div>
