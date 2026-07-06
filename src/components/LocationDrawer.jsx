@@ -148,32 +148,33 @@ export const LocationDrawer = ({ isOpen, onClose }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={canClose ? handleClose : undefined}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50"
           />
 
-          {/* Modal Container positioned at top-left under the navbar */}
-          <div className="absolute top-[80px] left-4 md:left-[280px] z-[210] w-[calc(100%-32px)] md:w-auto">
+          {/* Modal Container */}
+          <div className="absolute top-[80px] left-4 md:left-[150px] lg:left-[170px] z-[210] w-[calc(100%-32px)] md:w-auto">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -10 }}
-              className="bg-white w-full md:w-[500px] rounded-xl shadow-2xl overflow-hidden flex flex-col"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white w-full md:w-[480px] rounded-lg shadow-[0_8px_30px_rgb(0,0,0,0.12)] flex flex-col"
             >
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-slate-100 bg-white flex items-center justify-between">
-                <span className="text-sm text-slate-500">
-                  Welcome to <span className="text-primary font-extrabold tracking-tight">OneBasket</span>
-                </span>
-              </div>
-
               {/* Content */}
-              <div className="p-6">
-                <div className="flex items-start gap-4 mb-6">
-                  <div className="mt-1 flex-shrink-0">
-                    <MapPin size={24} className="text-slate-700" />
+              <div className="p-7">
+                <div className="text-[13px] text-slate-500 mb-6">
+                  Welcome to <span className="text-[#0c831f] tracking-tight">OneBasket</span>
+                </div>
+                
+                <div className="flex items-start gap-4 mb-8">
+                  <div className="mt-0.5 flex-shrink-0">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-800">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
                   </div>
-                  <p className="text-slate-600 font-medium text-[15px] leading-relaxed">
-                    Please provide your delivery location to see products at nearby store
+                  <p className="text-[#4f585e] text-[15px] leading-[1.4]">
+                    Please provide your delivery location to see<br/>products at nearby store
                   </p>
                 </div>
 
@@ -184,26 +185,26 @@ export const LocationDrawer = ({ isOpen, onClose }) => {
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row items-center gap-4 relative">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={handleUseCurrentLocation}
                     disabled={loading}
-                    className="w-full sm:w-auto flex-shrink-0 bg-[#0c831f] hover:bg-[#0a6f1a] text-white px-5 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 text-sm"
+                    className="flex-shrink-0 bg-[#0c831f] hover:bg-[#0a6f1a] text-white px-4 py-2.5 rounded-md text-[13px] font-medium transition-colors flex items-center justify-center min-w-[140px]"
                   >
                     {loading ? <Loader2 size={16} className="animate-spin" /> : 'Detect my location'}
                   </button>
 
-                  <div className="flex items-center justify-center text-slate-300 text-xs px-1">
-                    <span className="bg-white px-2 z-10 border border-slate-200 rounded-full py-1">OR</span>
+                  <div className="flex items-center justify-center text-[#999] text-[11px] font-medium px-1">
+                    <span className="bg-white px-2 z-10 border border-[#e0e0e0] rounded-full py-1">OR</span>
                   </div>
 
-                  <div className="w-full relative flex-1">
+                  <div className="relative flex-1">
                     <input
                       type="text"
                       placeholder="search delivery location"
                       value={searchQuery}
                       onChange={(e) => handleSearch(e.target.value)}
-                      className="w-full px-4 py-3 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-300 transition-all"
+                      className="w-full px-3 py-2.5 border border-[#e0e0e0] rounded-md text-[13px] text-[#333] placeholder-[#999] focus:outline-none focus:border-[#0c831f] transition-all"
                     />
                   </div>
                 </div>
@@ -211,27 +212,27 @@ export const LocationDrawer = ({ isOpen, onClose }) => {
 
               {/* Integrated Search Results */}
               {searchQuery && (
-                <div className="border-t border-slate-100 max-h-[350px] overflow-y-auto bg-white flex flex-col">
+                <div className="border-t border-[#eee] max-h-[350px] overflow-y-auto bg-white flex flex-col rounded-b-lg">
                   {isSearching ? (
                     <div className="p-6 text-center">
-                      <Loader2 size={24} className="animate-spin mx-auto text-primary" />
+                      <Loader2 size={24} className="animate-spin mx-auto text-[#0c831f]" />
                     </div>
                   ) : searchResults.length > 0 ? (
                     searchResults.map((res) => (
                       <button
                         key={res.place_id}
                         onClick={() => selectSearchResult(res)}
-                        className="w-full text-left px-6 py-4 border-b border-slate-50 hover:bg-slate-50 transition-colors flex items-start gap-4"
+                        className="w-full text-left px-7 py-4 border-b border-[#f5f5f5] hover:bg-[#fcfcfc] transition-colors flex items-start gap-4"
                       >
-                        <MapPin size={18} className="text-slate-400 mt-1 flex-shrink-0" />
+                        <MapPin size={18} className="text-[#999] mt-0.5 flex-shrink-0" />
                         <div className="flex flex-col overflow-hidden">
-                          <span className="font-bold text-slate-700 text-sm truncate uppercase tracking-tight">{res.display_name.split(',')[0]}</span>
-                          <span className="text-[13px] text-slate-500 line-clamp-2 mt-0.5 leading-snug">{res.display_name}</span>
+                          <span className="text-[#333] text-[14px] font-medium truncate uppercase">{res.display_name.split(',')[0]}</span>
+                          <span className="text-[13px] text-[#888] line-clamp-1 mt-1">{res.display_name}</span>
                         </div>
                       </button>
                     ))
                   ) : (
-                    <div className="p-6 text-center text-sm text-slate-500">
+                    <div className="p-6 text-center text-sm text-[#999]">
                       No results found
                     </div>
                   )}
