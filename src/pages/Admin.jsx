@@ -448,7 +448,7 @@ const Admin = () => {
   const [productToDelete, setProductToDelete] = useState(null);
 
   useEffect(() => {
-    if (!token || user?.role !== 'admin') navigate('/');
+    if (!token || user?.role !== 'admin') navigate('/admin/login');
   }, [token, user, navigate]);
 
   useEffect(() => {
@@ -494,7 +494,7 @@ const Admin = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 pt-20">
+    <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <div className="w-60 bg-white border-r border-gray-200 flex flex-col">
         <div className="flex items-center justify-center h-16 border-b border-gray-200 gap-2">

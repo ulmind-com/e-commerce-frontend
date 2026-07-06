@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, NavLink, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, LayoutGrid, LogIn, LogOut, User, ChevronDown, Shield, MapPin, Heart, Search } from 'lucide-react';
 
@@ -16,6 +16,7 @@ import { AuthContext } from './context/AuthContext';
 import { LocationContext } from './context/LocationContext';
 import { WishlistProvider, useWishlist } from './context/WishlistContext';
 import Admin from './pages/Admin';
+import AdminLogin from './pages/AdminLogin';
 import PLP from './pages/PLP';
 import { PDP } from './pages/PDP';
 import Wishlist from './pages/Wishlist';
@@ -214,39 +215,52 @@ const Navbar = ({ onCartClick, onAuthClick, onLocationClick }) => {
   );
 };
 
-// ─── App ─────────────────────────────────────────────────────────────────────
-function App() {
+// ─── Consumer Layout ─────────────────────────────────────────────────────────
+const ConsumerLayout = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { isAuthModalOpen, openAuthModal, closeAuthModal } = useContext(AuthContext);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
 
   return (
+    <div className="flex flex-col min-h-screen relative text-foreground bg-slate-50">
+      <Navbar
+        onCartClick={() => setIsCartOpen(true)}
+        onAuthClick={openAuthModal}
+        onLocationClick={() => setIsLocationOpen(true)}
+      />
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <AuthModal isOpen={isAuthModalOpen} onClose={closeAuthModal} />
+      <LocationDrawer isOpen={isLocationOpen} onClose={() => setIsLocationOpen(false)} />
+
+      <main className="flex-grow">
+        <Outlet />
+      </main>
+    </div>
+  );
+};
+
+// ─── App ─────────────────────────────────────────────────────────────────────
+function App() {
+  return (
     <WishlistProvider>
       <Router>
-        <div className="flex flex-col min-h-screen relative text-foreground bg-slate-50">
-          <Navbar
-            onCartClick={() => setIsCartOpen(true)}
-            onAuthClick={openAuthModal}
-            onLocationClick={() => setIsLocationOpen(true)}
-          />
-          <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-          <AuthModal isOpen={isAuthModalOpen} onClose={closeAuthModal} />
-          <LocationDrawer isOpen={isLocationOpen} onClose={() => setIsLocationOpen(false)} />
-
-          <main className="flex-grow">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/products" element={<PLP />} />
-              <Route path="/products/:id" element={<PDP />} />
-              <Route path="/product/:id" element={<ProductDetails />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/orders/:orderId/track" element={<OrderTracking />} />
-              <Route path="/my-orders" element={<MyOrders />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/wishlist" element={<Wishlist />} />
-            </Routes>
-          </main>
-        </div>
+        <Routes>
+          {/* Admin Routes (No consumer Navbar/Modals) */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<Admin />} />
+          
+          {/* Consumer Routes */}
+          <Route element={<ConsumerLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/products" element={<PLP />} />
+            <Route path="/products/:id" element={<PDP />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/orders/:orderId/track" element={<OrderTracking />} />
+            <Route path="/my-orders" element={<MyOrders />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+          </Route>
+        </Routes>
       </Router>
     </WishlistProvider>
   );
