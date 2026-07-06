@@ -3,8 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, CreditCard, CheckCircle2, ChevronRight, ShoppingBag, Loader2, Check } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
 import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
 import { LocationContext } from '../context/LocationContext';
@@ -13,8 +11,7 @@ import PaymentStep from '../components/PaymentStep';
 
 const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
-const STRIPE_PK = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51TqIlSPLAiQs1h7viIGG0NPUmGFd5q3gF4LFK4BiEkLLzBrhRmzY3kakbwXQ6YO7X40vXT7qKdJSoGpLhTcKyVSR0094bu4CB8';
-const stripePromise = loadStripe(STRIPE_PK);
+
 
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   if (!lat1 || !lon1 || !lat2 || !lon2) return null;
@@ -111,17 +108,15 @@ export const Checkout = () => {
       return null;
     }
     return (
-      <Elements stripe={stripePromise}>
-        <PaymentStep
-          cartItems={cartItems}
-          total={total}
-          currentLocation={currentLocation}
-          user={user}
-          token={token}
-          onSuccess={handlePaymentSuccess}
-          onBack={() => setCurrentStep(2)}
-        />
-      </Elements>
+      <PaymentStep
+        cartItems={cartItems}
+        total={total}
+        currentLocation={currentLocation}
+        user={user}
+        token={token}
+        onSuccess={handlePaymentSuccess}
+        onBack={() => setCurrentStep(2)}
+      />
     );
   }
 

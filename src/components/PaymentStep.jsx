@@ -1,69 +1,34 @@
 import React, { useState, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp, CreditCard, Building2, Smartphone, Wallet, Banknote, Loader2, Lock, CheckCircle2 } from 'lucide-react';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import axios from 'axios';
-import { CartContext } from '../context/CartContext';
-import { AuthContext } from '../context/AuthContext';
-import { LocationContext } from '../context/LocationContext';
 
 const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
+const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_SGtvYHFtIRGg0G';
 
-// Bank data for Netbanking
-const POPULAR_BANKS = [
-  { id: 'hdfc', name: 'HDFC', color: '#004C8F', letter: 'H' },
-  { id: 'kotak', name: 'Kotak', color: '#ED1C24', letter: 'K' },
-  { id: 'icici', name: 'ICICI', color: '#F37920', letter: 'I' },
-  { id: 'sbi', name: 'SBI', color: '#2F57A4', letter: 'S' },
-  { id: 'axis', name: 'Axis', color: '#97144D', letter: 'A' },
-];
-
-// Wallet data
-const WALLETS = [
-  { id: 'paytm', name: 'Paytm', color: '#00BAF2' },
-  { id: 'phonepe', name: 'PhonePe', color: '#5F259F' },
-  { id: 'amazonpay', name: 'Amazon Pay', color: '#FF9900' },
-  { id: 'mobikwik', name: 'MobiKwik', color: '#E14343' },
-];
-
-// Card brand logos (SVG paths)
-const CARD_BRANDS = ['Visa', 'Mastercard', 'Amex', 'Discover', 'RuPay'];
-
-// Stripe CardElement styling
-const CARD_ELEMENT_OPTIONS = {
-  style: {
-    base: {
-      fontSize: '16px',
-      color: '#1e293b',
-      fontFamily: '"Inter", system-ui, sans-serif',
-      fontSmoothing: 'antialiased',
-      '::placeholder': {
-        color: '#94a3b8',
-      },
-      lineHeight: '24px',
-    },
-    invalid: {
-      color: '#ef4444',
-      iconColor: '#ef4444',
-    },
-  },
-  hidePostalCode: true,
-};
+// Load Razorpay checkout script
+const loadRazorpay = () =>
+  new Promise((resolve) => {
+    if (window.Razorpay) { resolve(true); return; }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
 
 // Accordion Section Component
-const AccordionSection = ({ id, title, icon: Icon, isOpen, onToggle, children, disabled, disabledMessage }) => (
-  <div className={`border-b border-slate-100 ${disabled ? 'opacity-50' : ''}`}>
+const AccordionSection = ({ id, title, icon: Icon, isOpen, onToggle, children, badge }) => (
+  <div className="border-b border-slate-100 last:border-0">
     <button
-      onClick={() => !disabled && onToggle(id)}
-      className={`w-full flex items-center justify-between px-8 py-5 text-left transition-colors ${
-        disabled ? 'cursor-not-allowed' : 'hover:bg-slate-50 cursor-pointer'
-      }`}
+      onClick={() => onToggle(id)}
+      className={`w-full flex items-center justify-between px-6 sm:px-8 py-5 text-left transition-colors hover:bg-slate-50 cursor-pointer`}
     >
       <div className="flex items-center gap-3">
         <Icon size={20} className={isOpen ? 'text-primary' : 'text-slate-400'} />
         <span className={`text-[15px] font-semibold ${isOpen ? 'text-primary' : 'text-slate-800'}`}>{title}</span>
-        {disabled && disabledMessage && (
-          <span className="text-xs text-slate-400 ml-2">{disabledMessage}</span>
+        {badge && (
+          <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">{badge}</span>
         )}
       </div>
       {isOpen ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
@@ -77,7 +42,7 @@ const AccordionSection = ({ id, title, icon: Icon, isOpen, onToggle, children, d
           transition={{ duration: 0.25, ease: 'easeInOut' }}
           className="overflow-hidden"
         >
-          <div className="px-8 pb-6">
+          <div className="px-6 sm:px-8 pb-6">
             {children}
           </div>
         </motion.div>
@@ -87,20 +52,14 @@ const AccordionSection = ({ id, title, icon: Icon, isOpen, onToggle, children, d
 );
 
 const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess, onBack }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-  
   const [activeSection, setActiveSection] = useState(null);
   const [processing, setProcessing] = useState(false);
-  const [cardName, setCardName] = useState('');
-  const [upiId, setUpiId] = useState('');
-  const [selectedBank, setSelectedBank] = useState(null);
   const [selectedWallet, setSelectedWallet] = useState(null);
-  const [cardError, setCardError] = useState(null);
-  const [cardComplete, setCardComplete] = useState(false);
-  
-  const payableAmount = total + 9; // packaging fee
-  
+  const [selectedBank, setSelectedBank] = useState(null);
+  const [upiId, setUpiId] = useState('');
+
+  const payableAmount = total + 9;
+
   const toggleSection = (id) => {
     setActiveSection(activeSection === id ? null : id);
   };
@@ -126,72 +85,84 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
     return res.data;
   };
 
-  // Handle Card Payment (real Stripe)
-  const handleCardPayment = async () => {
-    if (!stripe || !elements) return;
-    
+  // Open Razorpay Checkout with a specific prefill method
+  const openRazorpay = async (prefillMethod) => {
     setProcessing(true);
     try {
-      // 1. Create order (gets PaymentIntent)
-      const order = await createOrder('ONLINE');
-      
-      if (!order.stripe_client_secret) {
-        alert('Payment setup failed. Please try again.');
-        setProcessing(false);
-        return;
-      }
-      
-      // 2. Confirm card payment with Stripe
-      const { error, paymentIntent } = await stripe.confirmCardPayment(
-        order.stripe_client_secret,
-        {
-          payment_method: {
-            card: elements.getElement(CardElement),
-            billing_details: { name: cardName || user?.full_name || 'Customer' },
-          },
-        }
-      );
-      
-      if (error) {
-        alert(error.message);
-        setProcessing(false);
-        return;
-      }
-      
-      // 3. Verify with backend
-      await axios.post(`${API}/orders/verify-payment`, {
-        order_id: order._id,
-        payment_intent_id: paymentIntent.id,
-      });
-      
-      onSuccess(order._id);
-    } catch (err) {
-      console.error('Card Payment Error:', err);
-      alert(err.response?.data?.detail || 'Payment failed. Please try again.');
-    } finally {
-      setProcessing(false);
-    }
-  };
+      const loaded = await loadRazorpay();
+      if (!loaded) { alert('Failed to load Razorpay. Please refresh and try again.'); setProcessing(false); return; }
 
-  // Handle simulated payment (UPI, Netbanking, Wallets)
-  const handleSimulatedPayment = async (methodName) => {
-    setProcessing(true);
-    try {
+      // Create order in backend (which creates Razorpay order)
       const order = await createOrder('ONLINE');
-      
-      // Simulate a brief delay for realism
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      await axios.post(`${API}/orders/verify-payment`, {
-        order_id: order._id,
-        simulated: true,
+
+      if (!order.razorpay_order_id) {
+        alert('Could not create payment order. Please try again.');
+        setProcessing(false);
+        return;
+      }
+
+      const options = {
+        key: RAZORPAY_KEY_ID,
+        amount: Math.round(payableAmount * 100),
+        currency: 'INR',
+        name: 'OneBasket',
+        description: `Order #${order._id}`,
+        order_id: order.razorpay_order_id,
+        handler: async (response) => {
+          // Verify payment with backend
+          try {
+            await axios.post(`${API}/orders/verify-payment`, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              order_id: order._id,
+            });
+            onSuccess(order._id);
+          } catch (err) {
+            console.error('Verification failed:', err);
+            alert('Payment verification failed. Please contact support.');
+          }
+        },
+        prefill: {
+          name: user?.full_name || '',
+          email: user?.email || '',
+          contact: user?.phone || '',
+        },
+        config: {
+          display: {
+            blocks: {
+              banks: {
+                name: prefillMethod === 'netbanking' ? 'Pay using Netbanking' :
+                      prefillMethod === 'upi' ? 'Pay using UPI' :
+                      prefillMethod === 'wallet' ? 'Pay using Wallet' :
+                      'Pay using Card',
+                instruments: prefillMethod === 'netbanking' ? [{ method: 'netbanking' }] :
+                             prefillMethod === 'upi' ? [{ method: 'upi' }] :
+                             prefillMethod === 'wallet' ? [{ method: 'wallet' }] :
+                             [{ method: 'card' }],
+              },
+            },
+            sequence: ['block.banks'],
+            preferences: { show_default_blocks: true },
+          },
+        },
+        theme: { color: '#0f766e' },
+        modal: {
+          ondismiss: () => setProcessing(false),
+          confirm_close: true,
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', (response) => {
+        alert(`Payment failed: ${response.error.description}`);
+        setProcessing(false);
       });
-      
-      onSuccess(order._id);
+      rzp.open();
+
     } catch (err) {
-      console.error(`${methodName} Payment Error:`, err);
+      console.error('Payment Error:', err);
       alert(err.response?.data?.detail || 'Payment failed. Please try again.');
-    } finally {
       setProcessing(false);
     }
   };
@@ -210,43 +181,50 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
     }
   };
 
+  // Wallet data
+  const WALLETS = [
+    { id: 'paytm', name: 'Paytm', color: '#00BAF2' },
+    { id: 'phonepe', name: 'PhonePe', color: '#5F259F' },
+    { id: 'amazonpay', name: 'Amazon Pay', color: '#FF9900' },
+    { id: 'freecharge', name: 'Freecharge', color: '#14C38E' },
+  ];
+
+  const BANKS = [
+    { id: 'hdfc', name: 'HDFC', color: '#004C8F', letter: 'H' },
+    { id: 'kotak', name: 'Kotak', color: '#ED1C24', letter: 'K' },
+    { id: 'icici', name: 'ICICI', color: '#F37920', letter: 'I' },
+    { id: 'sbi', name: 'SBI', color: '#2F57A4', letter: 'S' },
+    { id: 'axis', name: 'Axis', color: '#97144D', letter: 'A' },
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50 pt-24 px-4 md:px-8 pb-16">
       <div className="max-w-6xl mx-auto">
         {/* Back button */}
-        <button onClick={onBack} className="text-sm text-primary font-semibold mb-4 hover:underline">← Back to Order Summary</button>
-        
+        <button onClick={onBack} className="text-sm text-primary font-semibold mb-4 hover:underline flex items-center gap-1">
+          ← Back to Order Summary
+        </button>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           {/* LEFT: Payment Methods */}
           <div className="lg:col-span-7">
             <h1 className="text-2xl font-bold text-slate-900 mb-6">Select Payment Method</h1>
-            
+
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              
+
               {/* WALLETS */}
-              <AccordionSection
-                id="wallets"
-                title="Wallets"
-                icon={Wallet}
-                isOpen={activeSection === 'wallets'}
-                onToggle={toggleSection}
-              >
+              <AccordionSection id="wallets" title="Wallets" icon={Wallet} isOpen={activeSection === 'wallets'} onToggle={toggleSection}>
                 <div className="grid grid-cols-2 gap-3">
                   {WALLETS.map(w => (
                     <button
                       key={w.id}
                       onClick={() => setSelectedWallet(w.id)}
                       className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
-                        selectedWallet === w.id
-                          ? 'border-primary bg-primary/5'
-                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                        selectedWallet === w.id ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                     >
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-                        style={{ backgroundColor: w.color }}
-                      >
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: w.color }}>
                         {w.name.charAt(0)}
                       </div>
                       <span className="text-sm font-semibold text-slate-700">{w.name}</span>
@@ -256,9 +234,8 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
                 </div>
                 {selectedWallet && (
                   <motion.button
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    onClick={() => handleSimulatedPayment('Wallet')}
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    onClick={() => openRazorpay('wallet')}
                     disabled={processing}
                     className="mt-5 w-full bg-primary hover:bg-primary/90 text-white py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
                   >
@@ -269,128 +246,72 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
               </AccordionSection>
 
               {/* CREDIT & DEBIT CARDS */}
-              <AccordionSection
-                id="cards"
-                title="Add credit or debit cards"
-                icon={CreditCard}
-                isOpen={activeSection === 'cards'}
-                onToggle={toggleSection}
-              >
+              <AccordionSection id="cards" title="Add credit or debit cards" icon={CreditCard} isOpen={activeSection === 'cards'} onToggle={toggleSection}>
                 <div className="space-y-4">
-                  {/* Card Brand Icons */}
                   <div className="flex items-center gap-2 mb-1">
                     <CheckCircle2 size={18} className="text-primary" />
                     <span className="text-sm font-semibold text-slate-700">Add Debit / Credit / ATM Card</span>
                   </div>
-                  <div className="flex items-center gap-3 mb-4">
-                    {CARD_BRANDS.map(brand => (
+                  <div className="flex items-center gap-2 mb-2">
+                    {['VISA', 'Mastercard', 'RuPay', 'Amex', 'Diners'].map(brand => (
                       <div key={brand} className="px-2.5 py-1.5 border border-slate-200 rounded-md text-[10px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50">
                         {brand}
                       </div>
                     ))}
                   </div>
-                  
-                  {/* Name on Card */}
-                  <input
-                    type="text"
-                    placeholder="Name on Card"
-                    value={cardName}
-                    onChange={(e) => setCardName(e.target.value)}
-                    className="w-full px-4 py-3.5 border border-slate-200 rounded-xl text-[15px] text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                  />
-                  
-                  {/* Stripe CardElement */}
-                  <div className="border border-slate-200 rounded-xl px-4 py-3.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all bg-white">
-                    <CardElement
-                      options={CARD_ELEMENT_OPTIONS}
-                      onChange={(e) => {
-                        setCardError(e.error ? e.error.message : null);
-                        setCardComplete(e.complete);
-                      }}
-                    />
-                  </div>
-                  {cardError && <p className="text-xs text-red-500 mt-1">{cardError}</p>}
-                  
-                  {/* Test Card Info */}
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-start gap-3">
-                    <span className="text-amber-500 text-lg mt-0.5">💳</span>
-                    <div>
-                      <p className="text-xs font-semibold text-amber-800">Test Mode Card</p>
-                      <p className="text-xs text-amber-700 mt-0.5">Use card number: <span className="font-mono font-bold">4242 4242 4242 4242</span></p>
-                      <p className="text-xs text-amber-700">Expiry: any future date | CVV: any 3 digits</p>
-                    </div>
-                  </div>
-                  
-                  {/* Pay Button */}
+                  <p className="text-sm text-slate-500">We accept Credit and Debit Cards from Visa, Mastercard, American Express, Diners & RuPay.</p>
+
                   <button
-                    onClick={handleCardPayment}
-                    disabled={processing || !cardComplete}
+                    onClick={() => openRazorpay('card')}
+                    disabled={processing}
                     className="w-full bg-primary hover:bg-primary/90 text-white py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
                   >
-                    {processing ? <Loader2 size={18} className="animate-spin" /> : <Lock size={16} />}
-                    {processing ? 'Processing...' : `Pay ₹${payableAmount.toFixed(0)}`}
+                    {processing ? <Loader2 size={18} className="animate-spin" /> : <CreditCard size={16} />}
+                    {processing ? 'Processing...' : `Pay with Card • ₹${payableAmount.toFixed(0)}`}
                   </button>
-                  
-                  <p className="text-[11px] text-slate-400 text-center flex items-center justify-center gap-1">
-                    <Lock size={10} /> Your card details are secured with SSL encryption
-                  </p>
+
+                  <div className="flex items-center gap-2 justify-center">
+                    <Lock size={11} className="text-slate-400" />
+                    <span className="text-[11px] text-slate-400">Secured by Razorpay with 256-bit SSL encryption</span>
+                  </div>
                 </div>
               </AccordionSection>
 
               {/* NETBANKING */}
-              <AccordionSection
-                id="netbanking"
-                title="Netbanking"
-                icon={Building2}
-                isOpen={activeSection === 'netbanking'}
-                onToggle={toggleSection}
-              >
+              <AccordionSection id="netbanking" title="Netbanking" icon={Building2} isOpen={activeSection === 'netbanking'} onToggle={toggleSection}>
                 <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 mb-4">
-                  {POPULAR_BANKS.map(bank => (
+                  {BANKS.map(bank => (
                     <button
                       key={bank.id}
                       onClick={() => setSelectedBank(bank.id)}
                       className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                        selectedBank === bank.id
-                          ? 'border-primary bg-primary/5'
-                          : 'border-slate-200 hover:border-slate-300'
+                        selectedBank === bank.id ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-slate-300'
                       }`}
                     >
-                      <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg"
-                        style={{ backgroundColor: bank.color }}
-                      >
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: bank.color }}>
                         {bank.letter}
                       </div>
                       <span className="text-xs font-semibold text-slate-600">{bank.name}</span>
-                      {selectedBank === bank.id && (
-                        <CheckCircle2 size={14} className="text-primary" />
-                      )}
+                      {selectedBank === bank.id && <CheckCircle2 size={14} className="text-primary" />}
                     </button>
                   ))}
                 </div>
-                
-                {/* All Banks Dropdown */}
-                <select className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                <select className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-600 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary mb-4">
                   <option>All Banks</option>
                   <option>Bank of Baroda</option>
                   <option>Canara Bank</option>
-                  <option>Central Bank</option>
                   <option>Federal Bank</option>
-                  <option>Indian Bank</option>
                   <option>IndusInd Bank</option>
                   <option>Punjab National Bank</option>
                   <option>Union Bank</option>
                   <option>Yes Bank</option>
                 </select>
-                
                 {selectedBank && (
                   <motion.button
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    onClick={() => handleSimulatedPayment('Netbanking')}
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    onClick={() => openRazorpay('netbanking')}
                     disabled={processing}
-                    className="mt-5 w-full bg-primary hover:bg-primary/90 text-white py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
+                    className="w-full bg-primary hover:bg-primary/90 text-white py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
                   >
                     {processing ? <Loader2 size={18} className="animate-spin" /> : <Lock size={16} />}
                     Pay ₹{payableAmount.toFixed(0)}
@@ -399,32 +320,11 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
               </AccordionSection>
 
               {/* UPI */}
-              <AccordionSection
-                id="upi"
-                title="UPI"
-                icon={Smartphone}
-                isOpen={activeSection === 'upi'}
-                onToggle={toggleSection}
-              >
+              <AccordionSection id="upi" title="UPI" icon={Smartphone} isOpen={activeSection === 'upi'} onToggle={toggleSection} badge="Popular">
                 <div className="space-y-4">
-                  {/* UPI ID Input */}
                   <div>
-                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Enter UPI ID</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="yourname@upi"
-                        value={upiId}
-                        onChange={(e) => setUpiId(e.target.value)}
-                        className="flex-1 px-4 py-3.5 border border-slate-200 rounded-xl text-[15px] text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* UPI Apps */}
-                  <div>
-                    <p className="text-xs text-slate-500 mb-3 font-medium">Or pay using UPI apps</p>
-                    <div className="flex items-center gap-3">
+                    <p className="text-xs text-slate-500 mb-3 font-medium">Pay using UPI apps</p>
+                    <div className="flex items-center gap-4 mb-4">
                       {[
                         { name: 'GPay', color: '#4285F4', letter: 'G' },
                         { name: 'PhonePe', color: '#5F259F', letter: 'P' },
@@ -432,10 +332,7 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
                         { name: 'Others', color: '#64748b', letter: '...' },
                       ].map(app => (
                         <div key={app.name} className="flex flex-col items-center gap-1.5">
-                          <div
-                            className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm"
-                            style={{ backgroundColor: app.color }}
-                          >
+                          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm" style={{ backgroundColor: app.color }}>
                             {app.letter}
                           </div>
                           <span className="text-[10px] text-slate-500 font-medium">{app.name}</span>
@@ -443,26 +340,19 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
                       ))}
                     </div>
                   </div>
-                  
                   <button
-                    onClick={() => handleSimulatedPayment('UPI')}
-                    disabled={processing || !upiId.trim()}
+                    onClick={() => openRazorpay('upi')}
+                    disabled={processing}
                     className="w-full bg-primary hover:bg-primary/90 text-white py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
                   >
-                    {processing ? <Loader2 size={18} className="animate-spin" /> : <Lock size={16} />}
-                    {processing ? 'Verifying...' : `Pay ₹${payableAmount.toFixed(0)}`}
+                    {processing ? <Loader2 size={18} className="animate-spin" /> : <Smartphone size={16} />}
+                    {processing ? 'Opening UPI...' : `Pay with UPI • ₹${payableAmount.toFixed(0)}`}
                   </button>
                 </div>
               </AccordionSection>
 
               {/* CASH ON DELIVERY */}
-              <AccordionSection
-                id="cod"
-                title="Cash on Delivery"
-                icon={Banknote}
-                isOpen={activeSection === 'cod'}
-                onToggle={toggleSection}
-              >
+              <AccordionSection id="cod" title="Cash on Delivery" icon={Banknote} isOpen={activeSection === 'cod'} onToggle={toggleSection}>
                 <div className="space-y-4">
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-start gap-3">
                     <Banknote size={20} className="text-slate-400 mt-0.5 shrink-0" />
@@ -484,11 +374,11 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
 
             </div>
           </div>
-          
+
           {/* RIGHT: Order Summary Sidebar */}
           <div className="lg:col-span-5">
             <div className="sticky top-24 space-y-4">
-              
+
               {/* Delivery Address */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
                 <h3 className="font-bold text-slate-800 mb-2">Delivery Address</h3>
@@ -499,14 +389,14 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
                   {currentLocation?.address && `, ${currentLocation.address}`}
                 </p>
               </div>
-              
+
               {/* Cart Items */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-slate-800">My Cart</h3>
                   <span className="text-sm text-slate-500 font-medium">{cartItems.reduce((s, i) => s + i.quantity, 0)} items</span>
                 </div>
-                
+
                 <div className="space-y-3 max-h-64 overflow-y-auto">
                   {cartItems.map((item) => (
                     <div key={item._id || item.id} className="flex items-center gap-3">
@@ -529,7 +419,7 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
                     </div>
                   ))}
                 </div>
-                
+
                 {/* Price Breakdown */}
                 <div className="border-t border-slate-100 mt-4 pt-4 space-y-2">
                   <div className="flex justify-between text-sm">
@@ -550,16 +440,16 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
                   </div>
                 </div>
               </div>
-              
+
               {/* Security Badge */}
               <div className="flex items-center justify-center gap-2 text-xs text-slate-400 font-medium py-2">
                 <Lock size={12} />
-                <span>100% Safe & Secure Payment</span>
+                <span>100% Safe & Secure Payment • Powered by Razorpay</span>
               </div>
-              
+
             </div>
           </div>
-          
+
         </div>
       </div>
     </div>
