@@ -8,7 +8,7 @@ import { AuthContext } from '../context/AuthContext';
 import { LocationContext } from '../context/LocationContext';
 import { LocationDrawer } from '../components/LocationDrawer';
 
-const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
 const PAYMENT_MODES = [
   { id: 'COD', label: 'Cash on Delivery', sub: 'Pay when your order arrives', icon: '💵' },
@@ -82,7 +82,7 @@ export const Checkout = () => {
         delivery_location: currentLocation,
       };
 
-      const res = await axios.post(`${API}/api/orders/`, orderPayload, {
+      const res = await axios.post(`${API}/orders/`, orderPayload, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const createdOrder = res.data;
@@ -99,7 +99,7 @@ export const Checkout = () => {
           description: `Order #${createdOrder._id}`,
           order_id: createdOrder.razorpay_order_id,
           handler: async (response) => {
-            await axios.post(`${API}/api/orders/verify-payment`, {
+            await axios.post(`${API}/orders/verify-payment`, {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,

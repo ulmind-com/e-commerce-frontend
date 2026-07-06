@@ -13,7 +13,7 @@ import {
 import { ProductCard } from '../components/ui/ProductCard';
 import { ReviewModal } from '../components/ReviewModal';
 
-const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   if (!lat1 || !lon1 || !lat2 || !lon2) return null;
@@ -170,12 +170,12 @@ export const PDP = () => {
     // Fetch reviews
     const productId = product?._id || product?.id || id;
     if (productId) {
-      axios.get(`${API}/api/reviews/${productId}`)
+      axios.get(`${API}/reviews/${productId}`)
         .then(res => setReviews(res.data))
         .catch(err => console.error("Failed to load reviews:", err));
         
       if (token) {
-        axios.get(`${API}/api/reviews/${productId}/can-review`, {
+        axios.get(`${API}/reviews/${productId}/can-review`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         .then(res => {
@@ -193,7 +193,7 @@ export const PDP = () => {
   useEffect(() => {
     const fetchProduct = () => {
       // Append timestamp to bust browser cache
-      axios.get(`${API}/api/products/${id}?t=${Date.now()}`)
+      axios.get(`${API}/products/${id}?t=${Date.now()}`)
         .then((res) => {
           setProduct(normalizeProduct(res.data));
           setLoading(false);
@@ -217,7 +217,7 @@ export const PDP = () => {
 
   useEffect(() => {
     if (!product?.category_id) return;
-    axios.get(`${API}/api/products?category_id=${product.category_id}`)
+    axios.get(`${API}/products?category_id=${product.category_id}`)
       .then((res) => {
         const filtered = res.data.filter(p => (p._id || p.id) !== (product._id || product.id));
         setSuggestedProducts(filtered.slice(0, 4));

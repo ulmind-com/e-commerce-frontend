@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { ProductCard } from '../components/ui/ProductCard';
 
-const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
 const SORT_OPTIONS = [
   { label: 'Relevance', value: '' },
@@ -43,7 +43,7 @@ const PLP = () => {
 
   // Fetch categories
   useEffect(() => {
-    fetch(`${API}/api/categories/`)
+    fetch(`${API}/categories/`)
       .then(r => r.json())
       .then(data => setCategories(data))
       .catch(() => {});
@@ -55,8 +55,8 @@ const PLP = () => {
     // Find category _id from slug
     const cat = categories.find(c => c.slug === categorySlug);
     const baseUrl = cat
-      ? `${API}/api/products?category_id=${cat._id}`
-      : `${API}/api/products`;
+      ? `${API}/products?category_id=${cat._id}`
+      : `${API}/products`;
     
     // Append timestamp to bust browser cache
     const url = baseUrl.includes('?') ? `${baseUrl}&t=${Date.now()}` : `${baseUrl}?t=${Date.now()}`;

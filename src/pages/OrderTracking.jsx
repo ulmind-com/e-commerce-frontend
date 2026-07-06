@@ -6,7 +6,7 @@ import { ArrowLeft, MapPin, Clock, Package, CheckCircle2, Truck, Loader2, XCircl
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 
-const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
 const STATUS_STEPS = [
   { id: 'placed', label: 'Order Placed', icon: Package },
@@ -103,8 +103,8 @@ export const OrderTracking = () => {
 
     const fetchOrder = () => {
       Promise.all([
-        axios.get(`${API}/api/orders/${orderId}?t=${Date.now()}`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API}/api/settings`)
+        axios.get(`${API}/orders/${orderId}?t=${Date.now()}`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/settings`)
       ]).then(([orderRes, settingsRes]) => {
         const order = orderRes.data;
         const cancelWindowMins = settingsRes.data?.cancel_window_mins || 5;
@@ -203,7 +203,7 @@ export const OrderTracking = () => {
     setShowCancelConfirm(false);
     setCancelling(true);
     try {
-      await axios.put(`${API}/api/orders/${orderId}/cancel`, {}, {
+      await axios.put(`${API}/orders/${orderId}/cancel`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStatus('Cancelled');

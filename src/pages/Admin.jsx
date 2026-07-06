@@ -16,7 +16,7 @@ import { TodayOrdersTab } from './admin/TodayOrdersTab';
 import { SettingsTab } from './admin/SettingsTab';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 
-const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
 // ─── Image Upload Zone ──────────────────────────────────────────────────────
 const ImageUploadZone = ({ productId, token, onUploaded }) => {
@@ -34,7 +34,7 @@ const ImageUploadZone = ({ productId, token, onUploaded }) => {
     try {
       const form = new FormData();
       form.append('file', file);
-      const res = await axios.post(`${API}/api/products/${productId}/image`, form, {
+      const res = await axios.post(`${API}/products/${productId}/image`, form, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       });
       onUploaded(res.data.image_url);
@@ -79,7 +79,7 @@ const ProductImageManager = ({ product, token, onImageDeleted, onImageUploaded }
   const handleDelete = async (url) => {
     setDeleting(url);
     try {
-      await axios.delete(`${API}/api/products/${product._id}/image`, {
+      await axios.delete(`${API}/products/${product._id}/image`, {
         params: { image_url: url },
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -156,11 +156,11 @@ const ProductFormModal = ({ token, categories, initialData, onSaved, onClose }) 
       };
       let res;
       if (initialData) {
-        res = await axios.put(`${API}/api/products/${initialData._id}`, payload, {
+        res = await axios.put(`${API}/products/${initialData._id}`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
       } else {
-        res = await axios.post(`${API}/api/products`, payload, {
+        res = await axios.post(`${API}/products`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
@@ -297,7 +297,7 @@ const CategoriesTab = ({ token }) => {
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/api/categories/`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(`${API}/categories/`, { headers: { Authorization: `Bearer ${token}` } });
       setCategories(res.data);
     } catch { } finally { setLoading(false); }
   };
@@ -308,7 +308,7 @@ const CategoriesTab = ({ token }) => {
     setCreating(true); setError('');
     try {
       const slug = newSlug.trim() || newName.toLowerCase().replace(/\s+/g, '-');
-      const res = await axios.post(`${API}/api/categories/`,
+      const res = await axios.post(`${API}/categories/`,
         { name: newName.trim(), slug, is_active: true },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -327,7 +327,7 @@ const CategoriesTab = ({ token }) => {
     if (!categoryToDelete) return;
     setDeleting(categoryToDelete);
     try {
-      await axios.delete(`${API}/api/categories/${categoryToDelete}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`${API}/categories/${categoryToDelete}`, { headers: { Authorization: `Bearer ${token}` } });
       setCategories((prev) => prev.filter((c) => c._id !== categoryToDelete));
     } catch { } finally { setDeleting(null); setCategoryToDelete(null); }
   };
@@ -454,14 +454,14 @@ const Admin = () => {
   useEffect(() => {
     if (activeTab !== 'categories') fetchData();
     // Pre-fetch categories for the create product modal
-    axios.get(`${API}/api/categories/`).then(r => setCategories(r.data)).catch(() => {});
+    axios.get(`${API}/categories/`).then(r => setCategories(r.data)).catch(() => {});
   }, [activeTab]);
 
   const fetchData = async () => {
     if (activeTab !== 'products') return;
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/api/products`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(`${API}/products`, { headers: { Authorization: `Bearer ${token}` } });
       setData(res.data);
     } catch { } finally { setLoading(false); }
   };
@@ -487,7 +487,7 @@ const Admin = () => {
   const confirmDeleteProduct = async () => {
     if (!productToDelete) return;
     try {
-      await axios.delete(`${API}/api/products/${productToDelete}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`${API}/products/${productToDelete}`, { headers: { Authorization: `Bearer ${token}` } });
       setData((prev) => prev.filter((p) => p._id !== productToDelete));
     } catch {}
     finally { setProductToDelete(null); }

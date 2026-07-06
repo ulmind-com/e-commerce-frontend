@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Package, ArrowRight, Loader2, ArrowLeft, CheckCircle2, XCircle, MapPin } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 
-const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
 export const MyOrders = () => {
   const { token, user } = useContext(AuthContext);
@@ -30,7 +30,7 @@ export const MyOrders = () => {
   const fetchOrders = async (showLoading = true) => {
     if (showLoading) setLoading(true);
     try {
-      const res = await axios.get(`${API}/api/orders/my-orders`, {
+      const res = await axios.get(`${API}/orders/my-orders`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       // Sort orders descending by created_at if possible, otherwise rely on backend sort

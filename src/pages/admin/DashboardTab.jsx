@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ShoppingCart, IndianRupee, AlertTriangle, Bike, Clock, Settings, Save, Loader2, CheckCircle2, X } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
 export const DashboardTab = ({ token, onNavigate }) => {
   const [stats, setStats] = useState(null);
@@ -14,8 +14,8 @@ export const DashboardTab = ({ token, onNavigate }) => {
   useEffect(() => {
     // Fetch stats and settings in parallel
     Promise.all([
-      axios.get(`${API}/api/admin/dashboard`, { headers: { Authorization: `Bearer ${token}` } }),
-      axios.get(`${API}/api/settings`)
+      axios.get(`${API}/admin/dashboard`, { headers: { Authorization: `Bearer ${token}` } }),
+      axios.get(`${API}/settings`)
     ])
       .then(([statsRes, settingsRes]) => { 
         setStats(statsRes.data); 
@@ -28,7 +28,7 @@ export const DashboardTab = ({ token, onNavigate }) => {
   const handleSaveSettings = async () => {
     setSavingSettings(true);
     try {
-      await axios.put(`${API}/api/settings/cancel-window`, 
+      await axios.put(`${API}/settings/cancel-window`, 
         { minutes: parseInt(cancelWindow, 10) },
         { headers: { Authorization: `Bearer ${token}` } }
       );

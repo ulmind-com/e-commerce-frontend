@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { MapPin, User, Mail, Shield, Bike, Loader2, X, Phone } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
 export const UsersTab = ({ token }) => {
   const [users, setUsers] = useState([]);
@@ -14,7 +14,7 @@ export const UsersTab = ({ token }) => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API}/api/admin/users`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(`${API}/admin/users`, { headers: { Authorization: `Bearer ${token}` } });
       setUsers(res.data);
     } catch (e) { console.error(e); } finally { setLoading(false); }
   };

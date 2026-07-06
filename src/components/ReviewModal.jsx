@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Star, Loader2 } from 'lucide-react';
 import axios from 'axios';
 
-const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
 export const ReviewModal = ({ isOpen, onClose, productId, token, onReviewAdded }) => {
   const [rating, setRating] = useState(0);
@@ -23,7 +23,7 @@ export const ReviewModal = ({ isOpen, onClose, productId, token, onReviewAdded }
     setError(null);
 
     try {
-      const res = await axios.post(`${API}/api/reviews`, {
+      const res = await axios.post(`${API}/reviews`, {
         product_id: productId,
         rating,
         review_text: reviewText

@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { AuthContext } from './AuthContext';
 import axios from 'axios';
 
-const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 const STORAGE_KEY = 'onebasket_location';
 
 export const LocationContext = createContext();
@@ -18,7 +18,7 @@ export const LocationProvider = ({ children }) => {
   // Fetch and poll shop location
   useEffect(() => {
     const fetchShopLocation = () => {
-      axios.get(`${API}/api/settings/shop-location`)
+      axios.get(`${API}/settings/shop-location`)
         .then(res => setShopLocation(res.data))
         .catch(err => console.error("Failed to fetch shop location", err));
     };
@@ -53,7 +53,7 @@ export const LocationProvider = ({ children }) => {
     if (!token) return; // Only logged in users can save permanently
     
     try {
-      const response = await axios.post(`${API}/api/auth/me/addresses`, addressObj, {
+      const response = await axios.post(`${API}/auth/me/addresses`, addressObj, {
         headers: { Authorization: `Bearer ${token}` }
       });
       // The backend returns the updated user object
@@ -71,7 +71,7 @@ export const LocationProvider = ({ children }) => {
     if (!token) return;
     
     try {
-      const response = await axios.put(`${API}/api/auth/me/addresses/${addressId}`, addressObj, {
+      const response = await axios.put(`${API}/auth/me/addresses/${addressId}`, addressObj, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data?.saved_addresses) {
@@ -87,7 +87,7 @@ export const LocationProvider = ({ children }) => {
   const deleteSavedAddress = async (addressId) => {
     if (!token) return;
     try {
-      const response = await axios.delete(`${API}/api/auth/me/addresses/${addressId}`, {
+      const response = await axios.delete(`${API}/auth/me/addresses/${addressId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data?.saved_addresses) {

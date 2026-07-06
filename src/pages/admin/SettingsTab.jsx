@@ -14,7 +14,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
 function LocationMarker({ position, setPosition }) {
   const map = useMapEvents({
@@ -45,7 +45,7 @@ export const SettingsTab = ({ token }) => {
 
   useEffect(() => {
     // Fetch initial shop location
-    axios.get(`${API}/api/settings/shop-location`, {
+    axios.get(`${API}/settings/shop-location`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     .then(res => {
@@ -63,7 +63,7 @@ export const SettingsTab = ({ token }) => {
     setSaving(true);
     setMessage('');
     try {
-      await axios.put(`${API}/api/settings/shop-location`, {
+      await axios.put(`${API}/settings/shop-location`, {
         lat: position.lat,
         lng: position.lng,
         express_delivery_max_distance: parseFloat(maxDistance)

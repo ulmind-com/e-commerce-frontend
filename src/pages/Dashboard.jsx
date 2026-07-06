@@ -4,7 +4,7 @@ import { Search, Mic, MicOff, MapPin, Grid as GridIcon, ArrowRight, Loader2, X }
 import { useNavigate } from 'react-router-dom';
 import { ProductCard } from '../components/ui/ProductCard';
 
-const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
 // Category config — slug must match backend slug
 const CATEGORY_CONFIG = [
@@ -45,7 +45,7 @@ export const Dashboard = () => {
 
   // Fetch recommended products
   useEffect(() => {
-    fetch(`${API}/api/products?limit=8`)
+    fetch(`${API}/products?limit=8`)
       .then(r => r.json())
       .then(data => setProducts(data.map(p => ({
         ...p, id: p._id, imageUrls: p.image_urls || [],

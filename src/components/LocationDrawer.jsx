@@ -19,7 +19,7 @@ L.Icon.Default.mergeOptions({
 // Reverse Geocoding helper
 async function reverseGeocode(lat, lng) {
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com'}`}/api/location/reverse-geocode?lat=${lat}&lng=${lng}`);
+    const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api'}`}/location/reverse-geocode?lat=${lat}&lng=${lng}`);
     return await res.json();
   } catch (e) {
     return { area: 'Server Offline', display: 'Please ask AI to restart the servers.' };
@@ -184,7 +184,7 @@ export const LocationDrawer = ({ isOpen, onClose }) => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com'}`}/api/location/search?q=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api'}`}/location/search?q=${encodeURIComponent(searchQuery)}`);
       const data = await res.json();
       setSearchResults(data);
     } catch (e) {

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 
-const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
 export const AuthContext = createContext();
 
@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      axios.get(`${API}/api/auth/me`, {
+      axios.get(`${API}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(response => {
@@ -38,19 +38,19 @@ export const AuthProvider = ({ children }) => {
     const formData = new FormData();
     formData.append('username', email);
     formData.append('password', password);
-    const response = await axios.post(`${API}/api/auth/login`, formData);
+    const response = await axios.post(`${API}/auth/login`, formData);
     const newToken = response.data.access_token;
     setToken(newToken);
     localStorage.setItem('token', newToken);
     // Immediately fetch full user profile (includes role)
-    const me = await axios.get(`${API}/api/auth/me`, {
+    const me = await axios.get(`${API}/auth/me`, {
       headers: { Authorization: `Bearer ${newToken}` }
     });
     setUser(me.data);
   };
 
   const register = async (fullName, email, phone, password) => {
-    await axios.post(`${API}/api/auth/register`, {
+    await axios.post(`${API}/auth/register`, {
       full_name: fullName,
       email,
       phone,
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
       const result = await signInWithPopup(auth, googleProvider);
       const fbUser = result.user;
       
-      const response = await axios.post(`${API}/api/auth/google`, {
+      const response = await axios.post(`${API}/auth/google`, {
         email: fbUser.email,
         full_name: fbUser.displayName || 'Google User',
         avatar_url: fbUser.photoURL,
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }) => {
       setToken(newToken);
       localStorage.setItem('token', newToken);
       
-      const me = await axios.get(`${API}/api/auth/me`, {
+      const me = await axios.get(`${API}/auth/me`, {
         headers: { Authorization: `Bearer ${newToken}` }
       });
       setUser(me.data);

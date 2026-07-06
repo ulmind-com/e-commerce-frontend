@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ShoppingCart, Loader2, CheckCircle2, ChevronDown } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com';
+const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
 const PIPELINE_STATUSES = ['Order Placed', 'Preparing', 'Out for Delivery', 'Delivered', 'Cancelled'];
 
@@ -18,14 +18,14 @@ export const OrdersTab = ({ token }) => {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get(`${API}/api/orders/`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(`${API}/orders/`, { headers: { Authorization: `Bearer ${token}` } });
       setOrders(res.data);
     } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
   const fetchPartners = async () => {
     try {
-      const res = await axios.get(`${API}/api/admin/delivery-partners`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(`${API}/admin/delivery-partners`, { headers: { Authorization: `Bearer ${token}` } });
       setPartners(res.data);
     } catch (e) { console.error(e); }
   };
@@ -33,14 +33,14 @@ export const OrdersTab = ({ token }) => {
   const handleStatusChange = async (orderId, newStatus) => {
     setOrders(prev => prev.map(o => o._id === orderId ? { ...o, order_status: newStatus } : o));
     try {
-      await axios.put(`${API}/api/orders/${orderId}/status`, { status: newStatus }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(`${API}/orders/${orderId}/status`, { status: newStatus }, { headers: { Authorization: `Bearer ${token}` } });
     } catch (e) { console.error("Status update failed"); }
   };
 
   const handlePartnerAssign = async (orderId, partnerId) => {
     setOrders(prev => prev.map(o => o._id === orderId ? { ...o, delivery_partner_id: partnerId } : o));
     try {
-      await axios.put(`${API}/api/orders/${orderId}/assign`, { delivery_partner_id: partnerId }, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(`${API}/orders/${orderId}/assign`, { delivery_partner_id: partnerId }, { headers: { Authorization: `Bearer ${token}` } });
     } catch (e) { console.error("Partner assignment failed"); }
   };
 
