@@ -68,7 +68,8 @@ export const AuthModal = ({ isOpen, onClose }) => {
       if (err.code === 'auth/popup-closed-by-user') {
         setError('Google Sign-in was cancelled. Please try again.');
       } else if (err.code === 'auth/unauthorized-domain') {
-        setError('This domain is not authorized in Firebase. Please add localhost to Firebase Auth settings.');
+        const domain = window.location.hostname;
+        setError(`This domain (${domain}) is not authorized in Firebase. You MUST go to Firebase Console -> Authentication -> Settings -> Authorized domains, and add ${domain} to fix this!`);
       } else if (err.message) {
         setError(`Google Auth Error: ${err.message}`);
       } else {
@@ -211,6 +212,8 @@ export const AuthModal = ({ isOpen, onClose }) => {
                     className="w-full pl-9 pr-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                     required
                     autoComplete="off"
+                    readOnly
+                    onFocus={(e) => e.target.removeAttribute('readonly')}
                   />
                 </div>
               </div>
@@ -229,6 +232,8 @@ export const AuthModal = ({ isOpen, onClose }) => {
                     required
                     autoComplete="new-password"
                     minLength={6}
+                    readOnly
+                    onFocus={(e) => e.target.removeAttribute('readonly')}
                   />
                   <button
                     type="button"
