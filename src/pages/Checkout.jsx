@@ -3,17 +3,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, CreditCard, CheckCircle2, ChevronRight, ShoppingBag, Loader2, Check } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
 import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
 import { LocationContext } from '../context/LocationContext';
 import { LocationDrawer } from '../components/LocationDrawer';
+import PaymentStep from '../components/PaymentStep';
 
 const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
 
-const PAYMENT_MODES = [
-  { id: 'COD', label: 'Cash on Delivery', sub: 'Pay when your order arrives', icon: '💵' },
-  { id: 'ONLINE', label: 'Online Payment', sub: 'Cards, Wallets, Apple/Google Pay via Stripe', icon: '💳' },
-];
+const STRIPE_PK = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51TqIlSPLAiQs1h7viIGG0NPUmGFd5q3gF4LFK4BiEkLLzBrhRmzY3kakbwXQ6YO7X40vXT7qKdJSoGpLhTcKyVSR0094bu4CB8';
+const stripePromise = loadStripe(STRIPE_PK);
 
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
   if (!lat1 || !lon1 || !lat2 || !lon2) return null;
@@ -44,37 +45,7 @@ export const Checkout = () => {
   const { savedAddresses, currentLocation, selectLocation, shopLocation } = useContext(LocationContext);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Check for Stripe Checkout success return
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const session_id = params.get('session_id');
-    const returned_order_id = params.get('order_id');
-    
-    if (session_id && returned_order_id) {
-      setPlacingOrder(true);
-      setCurrentStep(3); // To show loading state if needed
-      
-      axios.post(`${API}/orders/verify-payment`, {
-        session_id,
-        order_id: returned_order_id
-      })
-      .then(() => {
-        clearCart();
-        setOrderId(returned_order_id);
-        setCurrentStep(4);
-        // Clear URL
-        navigate('/checkout', { replace: true });
-      })
-      .catch(err => {
-        console.error('Stripe Verification failed', err);
-        alert('Payment verification failed. Please contact support.');
-        setCurrentStep(3);
-      })
-      .finally(() => {
-        setPlacingOrder(false);
-      });
-    }
-  }, [location, navigate, clearCart]);
+  // No longer need session-based verification since we use inline PaymentIntent
 
   const total = getCartTotal();
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -85,47 +56,11 @@ export const Checkout = () => {
   const deliveryFee = 40;
   const deliveryDiscount = 40;
 
-  const handlePlaceOrder = async () => {
-    if (!token) {
-      openAuthModal();
-      return;
-    }
-
-    setPlacingOrder(true);
-    try {
-      const orderPayload = {
-        items: cartItems.map((item) => ({
-          product_id: item._id || item.id,
-          title: item.title,
-          image_url: item.imageUrls?.[0] || item.image_urls?.[0],
-          quantity: item.quantity,
-          price_at_purchase: item.price,
-        })),
-        total_amount: total,
-        payment_mode: selectedPayment,
-        delivery_location: currentLocation,
-      };
-
-      const res = await axios.post(`${API}/orders/`, orderPayload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const createdOrder = res.data;
-
-      if (selectedPayment === 'ONLINE' && createdOrder.stripe_url) {
-        // Redirect to Stripe Checkout page
-        window.location.href = createdOrder.stripe_url;
-        return;
-      }
-
-      clearCart();
-      setOrderId(createdOrder._id);
-      setCurrentStep(4);
-    } catch (err) {
-      console.error('Order failed:', err);
-      alert(err.response?.data?.detail || 'Failed to place order. Please try again.');
-    } finally {
-      setPlacingOrder(false);
-    }
+  // handlePlaceOrder is no longer needed; PaymentStep handles everything
+  const handlePaymentSuccess = (newOrderId) => {
+    clearCart();
+    setOrderId(newOrderId);
+    setCurrentStep(4);
   };
 
   const isOrderSuccess = currentStep === 4;
@@ -165,6 +100,28 @@ export const Checkout = () => {
           </button>
         </div>
       </div>
+    );
+  }
+
+  // When on payment step, render the full Blinkit-style payment page
+  if (currentStep === 3) {
+    if (!token) {
+      openAuthModal();
+      setCurrentStep(2);
+      return null;
+    }
+    return (
+      <Elements stripe={stripePromise}>
+        <PaymentStep
+          cartItems={cartItems}
+          total={total}
+          currentLocation={currentLocation}
+          user={user}
+          token={token}
+          onSuccess={handlePaymentSuccess}
+          onBack={() => setCurrentStep(2)}
+        />
+      </Elements>
     );
   }
 
@@ -419,62 +376,7 @@ export const Checkout = () => {
             )}
           </div>
 
-          {/* STEP 3: PAYMENT */}
-          <div className="bg-white border border-slate-200 shadow-sm rounded-sm">
-            {/* Header */}
-            <div className={`px-6 py-4 flex justify-between items-center ${currentStep === 3 ? 'bg-primary text-white' : 'text-slate-800'}`}>
-              <h2 className="text-lg font-semibold flex items-center gap-3">
-                <span className={`w-6 h-6 flex items-center justify-center rounded-sm text-xs font-bold ${currentStep === 3 ? 'bg-white text-primary' : 'bg-slate-200 text-slate-500'}`}>3</span>
-                Payment Options
-              </h2>
-            </div>
-            
-            {/* Content (Active) */}
-            {currentStep === 3 && (
-              <div className="p-0">
-                <div className="divide-y divide-slate-100">
-                  {PAYMENT_MODES.map((mode) => (
-                    <div 
-                      key={mode.id}
-                      onClick={() => setSelectedPayment(mode.id)}
-                      className={`p-6 cursor-pointer flex gap-4 transition-all ${
-                        selectedPayment === mode.id ? 'bg-primary/5' : 'hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="mt-0.5">
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedPayment === mode.id ? 'border-primary' : 'border-slate-300'}`}>
-                          {selectedPayment === mode.id && <div className="w-2 h-2 rounded-full bg-primary" />}
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-slate-800 flex items-center gap-2">
-                          <span className="text-xl">{mode.icon}</span> {mode.label}
-                        </div>
-                        <p className="text-sm text-slate-500 mt-1">{mode.sub}</p>
-                        
-                        {selectedPayment === mode.id && (
-                          <div className="mt-6 flex justify-between items-center">
-                            <div>
-                              <p className="text-xs text-slate-500 mb-1">Payable Amount</p>
-                              <p className="text-xl font-bold text-slate-900">₹{(total + 9).toFixed(2)}</p>
-                            </div>
-                            <button
-                              onClick={handlePlaceOrder}
-                              disabled={placingOrder}
-                              className="bg-primary text-white px-10 py-3 rounded-sm font-semibold uppercase text-sm shadow-sm hover:shadow-md flex items-center gap-2 disabled:bg-slate-300"
-                            >
-                              {placingOrder && <Loader2 size={16} className="animate-spin" />}
-                              Pay ₹{(total + 9).toFixed(2)}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          {/* STEP 3: PAYMENT - Now handled by PaymentStep component (renders as full page) */}
           
           <p className="text-[11px] text-slate-500 mt-4 px-2 mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <span>Policies: Returns Policy | Terms of use | Security | Privacy | Infringement</span>
