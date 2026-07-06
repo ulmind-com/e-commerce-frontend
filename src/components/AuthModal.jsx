@@ -161,7 +161,7 @@ export const AuthModal = ({ isOpen, onClose }) => {
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Swastika Roy"
+                        placeholder="John Doe"
                         className="w-full pl-9 pr-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                         required={tab === 'register'}
                       />
