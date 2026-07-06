@@ -97,13 +97,7 @@ const Navbar = ({ onCartClick, onAuthClick, onLocationClick }) => {
       {/* Right side: Actions */}
       <div className="flex items-center gap-6 shrink-0">
         
-        {/* Admin Panel - accessible directly for admins */}
-        {user?.role === 'admin' && (
-          <Link to="/admin" className="hidden lg:flex items-center gap-2 hover:bg-slate-50 px-2 py-2 rounded-xl transition-colors group">
-            <Shield size={20} className="text-slate-400 group-hover:text-primary transition-colors" />
-            <span className="font-medium text-slate-700 hidden xl:block">Admin Panel</span>
-          </Link>
-        )}
+        {/* Removed Admin Panel button as per user request */}
 
         {/* Wishlist - hidden on mobile */}
         <Link to="/wishlist" className="hidden lg:flex items-center gap-2 hover:bg-slate-50 px-2 py-2 rounded-xl transition-colors group">
