@@ -1,8 +1,10 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { AuthContext } from './AuthContext';
 
 export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
+  const { user, openAuthModal } = useContext(AuthContext);
   const [cartItems, setCartItems] = useState(() => {
     const savedCart = localStorage.getItem('cart');
     return savedCart ? JSON.parse(savedCart) : [];
@@ -13,6 +15,10 @@ export const CartProvider = ({ children }) => {
   }, [cartItems]);
 
   const addToCart = (product) => {
+    if (!user) {
+      openAuthModal();
+      return;
+    }
     setCartItems(prev => {
       const existing = prev.find(item => item._id === product._id);
       if (existing) {

@@ -64,14 +64,18 @@ export const AuthModal = ({ isOpen, onClose }) => {
       await loginWithGoogle();
       onClose();
     } catch (err) {
-      console.error(err);
-      if (err.code === 'auth/popup-closed-by-user') {
+      console.error('Google Auth Full Error:', err);
+      if (err.isAxiosError) {
+        setError(`Backend Error: ${err.response?.data?.detail || err.message}`);
+      } else if (err.code === 'auth/popup-closed-by-user') {
         setError('Google Sign-in was cancelled. Please try again.');
       } else if (err.code === 'auth/unauthorized-domain') {
         const domain = window.location.hostname;
-        setError(`This domain (${domain}) is not authorized in Firebase. You MUST go to Firebase Console -> Authentication -> Settings -> Authorized domains, and add ${domain} to fix this!`);
+        setError(`This domain (${domain}) is not authorized in Firebase. Please add it to Firebase Console.`);
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('Firebase Network Error: Please check your internet connection or disable adblockers.');
       } else if (err.message) {
-        setError(`Google Auth Error: ${err.message}`);
+        setError(`Auth Error: ${err.message}`);
       } else {
         setError('Google Auth failed. Please try again.');
       }

@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, NavLink, useNavigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, NavLink, useNavigate, Outlet, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, LayoutGrid, LogIn, LogOut, User, ChevronDown, Shield, MapPin, Heart, Search } from 'lucide-react';
 
@@ -7,7 +7,12 @@ import Home from './pages/Home';
 import { ProductDetails } from './pages/ProductDetails';
 import { Checkout } from './pages/Checkout';
 import { OrderTracking } from './pages/OrderTracking';
-import { MyOrders } from './pages/MyOrders';
+import ProfileLayout from './layouts/ProfileLayout';
+import ProfileOrders from './pages/profile/ProfileOrders';
+import ProfileWishlist from './pages/profile/ProfileWishlist';
+import ProfileCoupons from './pages/profile/ProfileCoupons';
+import ProfileAddresses from './pages/profile/ProfileAddresses';
+import ProfileSettings from './pages/profile/ProfileSettings';
 import { CartDrawer } from './components/ui/CartDrawer';
 import { AuthModal } from './components/AuthModal';
 import { LocationDrawer } from './components/LocationDrawer';
@@ -15,8 +20,34 @@ import { CartContext } from './context/CartContext';
 import { AuthContext } from './context/AuthContext';
 import { LocationContext } from './context/LocationContext';
 import { WishlistProvider, useWishlist } from './context/WishlistContext';
-import Admin from './pages/Admin';
 import AdminLogin from './pages/AdminLogin';
+import AdminLayout from './layouts/AdminLayout';
+import DashboardPage from './pages/admin/DashboardPage';
+import ProductsPage from './pages/admin/ProductsPage';
+import CategoriesPage from './pages/admin/CategoriesPage';
+import BrandsPage from './pages/admin/BrandsPage';
+import InventoryPage from './pages/admin/InventoryPage';
+import OrdersPage from './pages/admin/OrdersPage';
+import CustomersPage from './pages/admin/CustomersPage';
+import PaymentsPage from './pages/admin/PaymentsPage';
+import ReturnsPage from './pages/admin/ReturnsPage';
+import DeliveryPage from './pages/admin/DeliveryPage';
+import CODPage from './pages/admin/CODPage';
+import CouponsPage from './pages/admin/CouponsPage';
+import BannersPage from './pages/admin/BannersPage';
+import CMSPage from './pages/admin/CMSPage';
+import ReviewsPage from './pages/admin/ReviewsPage';
+import NotificationsPage from './pages/admin/NotificationsPage';
+import ReportsPage from './pages/admin/ReportsPage';
+import FinancePage from './pages/admin/FinancePage';
+import StaffPage from './pages/admin/StaffPage';
+import SuppliersPage from './pages/admin/SuppliersPage';
+import SettingsPage from './pages/admin/SettingsPage';
+import AnalyticsPage from './pages/admin/AnalyticsPage';
+import AuditLogsPage from './pages/admin/AuditLogsPage';
+import AIPage from './pages/admin/AIPage';
+import SecurityPage from './pages/admin/SecurityPage';
+import { ToastProvider } from './components/admin/Toast';
 import PLP from './pages/PLP';
 import { PDP } from './pages/PDP';
 import Wishlist from './pages/Wishlist';
@@ -159,7 +190,15 @@ const Navbar = ({ onCartClick, onAuthClick, onLocationClick }) => {
                     <p className="text-sm font-semibold text-slate-800 truncate">{user.email}</p>
                   </div>
                   <Link
-                    to="/my-orders"
+                    to="/profile"
+                    onClick={() => setDropdownOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
+                  >
+                    <User size={16} className="text-slate-400" />
+                    My Profile
+                  </Link>
+                  <Link
+                    to="/profile/orders"
                     onClick={() => setDropdownOpen(false)}
                     className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-colors"
                   >
@@ -238,12 +277,39 @@ const ConsumerLayout = () => {
 // ─── App ─────────────────────────────────────────────────────────────────────
 function App() {
   return (
+    <ToastProvider>
     <WishlistProvider>
       <Router>
         <Routes>
           {/* Admin Routes (No consumer Navbar/Modals) */}
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="products" element={<ProductsPage />} />
+            <Route path="categories" element={<CategoriesPage />} />
+            <Route path="brands" element={<BrandsPage />} />
+            <Route path="inventory" element={<InventoryPage />} />
+            <Route path="orders" element={<OrdersPage />} />
+            <Route path="customers" element={<CustomersPage />} />
+            <Route path="payments" element={<PaymentsPage />} />
+            <Route path="returns" element={<ReturnsPage />} />
+            <Route path="delivery" element={<DeliveryPage />} />
+            <Route path="cod" element={<CODPage />} />
+            <Route path="coupons" element={<CouponsPage />} />
+            <Route path="banners" element={<BannersPage />} />
+            <Route path="cms" element={<CMSPage />} />
+            <Route path="reviews" element={<ReviewsPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="reports" element={<ReportsPage />} />
+            <Route path="finance" element={<FinancePage />} />
+            <Route path="staff" element={<StaffPage />} />
+            <Route path="suppliers" element={<SuppliersPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="audit-logs" element={<AuditLogsPage />} />
+            <Route path="ai" element={<AIPage />} />
+            <Route path="security" element={<SecurityPage />} />
+          </Route>
           
           {/* Consumer Routes */}
           <Route element={<ConsumerLayout />}>
@@ -253,12 +319,25 @@ function App() {
             <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/orders/:orderId/track" element={<OrderTracking />} />
-            <Route path="/my-orders" element={<MyOrders />} />
             <Route path="/wishlist" element={<Wishlist />} />
+
+            {/* Profile Section Routes */}
+            <Route path="/profile" element={<ProfileLayout />}>
+              <Route index element={<Navigate to="orders" replace />} />
+              <Route path="orders" element={<ProfileOrders />} />
+              <Route path="wishlist" element={<ProfileWishlist />} />
+              <Route path="coupons" element={<ProfileCoupons />} />
+              <Route path="addresses" element={<ProfileAddresses />} />
+              <Route path="settings" element={<ProfileSettings />} />
+            </Route>
+
+            {/* Legacy redirect for old /my-orders link */}
+            <Route path="/my-orders" element={<Navigate to="/profile/orders" replace />} />
           </Route>
         </Routes>
       </Router>
     </WishlistProvider>
+    </ToastProvider>
   );
 }
 

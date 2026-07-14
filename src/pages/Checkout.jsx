@@ -41,6 +41,9 @@ export const Checkout = () => {
   const { token, user, openAuthModal } = useContext(AuthContext);
   const { savedAddresses, currentLocation, selectLocation, shopLocation } = useContext(LocationContext);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [useGst, setUseGst] = useState(false);
+  const [companyName, setCompanyName] = useState('');
+  const [gstin, setGstin] = useState('');
 
   // No longer need session-based verification since we use inline PaymentIntent
 
@@ -114,6 +117,7 @@ export const Checkout = () => {
         currentLocation={currentLocation}
         user={user}
         token={token}
+        gstDetails={useGst ? { companyName, gstin } : null}
         onSuccess={handlePaymentSuccess}
         onBack={() => setCurrentStep(2)}
       />
@@ -340,13 +344,55 @@ export const Checkout = () => {
                   ))}
                 </div>
                 
-                <div className="bg-white border-t border-slate-100 px-6 py-4 flex justify-between items-center text-sm">
-                  <div className="flex items-center gap-2 text-slate-800 font-medium">
-                    <input type="checkbox" className="w-4 h-4 accent-primary" /> Use GST Invoice
+                <div className="bg-white border-t border-slate-100 px-6 py-4 flex flex-col gap-4 text-sm">
+                  <div className="flex justify-between items-center w-full">
+                    <div className="flex items-center gap-2 text-slate-800 font-medium">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 accent-primary" 
+                        checked={useGst}
+                        onChange={(e) => setUseGst(e.target.checked)}
+                      /> 
+                      Use GST Invoice
+                    </div>
+                    <div className="text-slate-600 flex items-center gap-2 text-xs">
+                      Email ID required for delivery <button className="text-primary font-semibold hover:underline">Add Email</button>
+                    </div>
                   </div>
-                  <div className="text-slate-600 flex items-center gap-2 text-xs">
-                    Email ID required for delivery <button className="text-primary font-semibold hover:underline">Add Email</button>
-                  </div>
+                  
+                  <AnimatePresence>
+                    {useGst && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3 overflow-hidden"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Company Name</label>
+                            <input 
+                              type="text" 
+                              value={companyName}
+                              onChange={(e) => setCompanyName(e.target.value)}
+                              placeholder="e.g. OneBasket Tech Pvt Ltd"
+                              className="w-full px-3 py-2 border border-slate-200 rounded-md text-sm outline-none focus:ring-1 focus:ring-primary focus:border-primary bg-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">GSTIN</label>
+                            <input 
+                              type="text" 
+                              value={gstin}
+                              onChange={(e) => setGstin(e.target.value.toUpperCase())}
+                              placeholder="29XXXXX0000X1Z5"
+                              className="w-full px-3 py-2 border border-slate-200 rounded-md text-sm outline-none focus:ring-1 focus:ring-primary focus:border-primary uppercase bg-white"
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <div className="p-4 bg-white border-t border-slate-200 shadow-[0_-2px_4px_rgba(0,0,0,0.05)] flex justify-between items-center sticky bottom-0 z-10">

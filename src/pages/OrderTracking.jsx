@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
-import { ArrowLeft, MapPin, Clock, Package, CheckCircle2, Truck, Loader2, XCircle, AlertCircle, Star } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Package, CheckCircle2, Truck, Loader2, XCircle, AlertCircle, Star, RefreshCcw } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 
@@ -143,7 +143,7 @@ export const OrderTracking = () => {
     let reconnectTimeout = null;
 
     const connectWebSocket = () => {
-      ws = new WebSocket(`ws://localhost:8000/api/orders/${orderId}/ws`);
+      ws = new WebSocket(`wss://e-commerce-backend-s2r8.onrender.com/api/orders/${orderId}/ws`);
       wsRef.current = ws;
 
       ws.onopen = () => setConnected(true);
@@ -177,7 +177,7 @@ export const OrderTracking = () => {
   }, [orderId]);
 
   useEffect(() => {
-    if (timeLeft <= 0 || status === 'Cancelled') return;
+    if (timeLeft <= 0 || status === 'Cancelled' || status === 'Refunded') return;
     const timer = setInterval(() => {
       setTimeLeft(prev => Math.max(0, prev - 1));
     }, 1000);
@@ -222,17 +222,18 @@ export const OrderTracking = () => {
   };
 
   const isCancelled = status.toLowerCase() === 'cancelled';
+  const isRefunded = status.toLowerCase() === 'refunded';
   const isDelivered = status === 'Delivered';
   
   let steps = STATUS_STEPS;
-  if (isCancelled) {
+  if (isCancelled || isRefunded) {
     steps = [
       { id: 'placed', label: 'Order Placed', icon: Package },
-      { id: 'cancelled', label: 'Cancelled', icon: XCircle },
+      { id: isRefunded ? 'refunded' : 'cancelled', label: isRefunded ? 'Refunded' : 'Cancelled', icon: XCircle },
     ];
   }
 
-  const currentStepIndex = isCancelled ? 1
+  const currentStepIndex = (isCancelled || isRefunded) ? 1
     : status === 'Delivered' ? 3
     : status.toLowerCase().includes('deliver') ? 2
     : status.toLowerCase().includes('prepar') ? 1
@@ -257,7 +258,7 @@ export const OrderTracking = () => {
               <p className="text-sm text-slate-500">
                 Order ID: <span className="font-mono text-slate-700">{orderId}</span>
               </p>
-              {timeLeft > 0 && !isCancelled && !isDelivered && (
+              {timeLeft > 0 && !isCancelled && !isRefunded && !isDelivered && (
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold text-red-500">
                     Cancel window: {formatTime(timeLeft)}
@@ -274,6 +275,25 @@ export const OrderTracking = () => {
             </div>
           )}
         </div>
+
+        {isRefunded && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-start sm:items-center gap-4 bg-purple-50 border-2 border-purple-200 rounded-2xl px-6 py-5 mb-6 shadow-sm"
+          >
+            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center shrink-0 mt-1 sm:mt-0">
+              <RefreshCcw size={24} className="text-purple-600" />
+            </div>
+            <div>
+              <p className="font-extrabold text-purple-800 text-lg">Refund Processed Successfully</p>
+              <p className="text-sm font-medium text-purple-600 mt-0.5 leading-relaxed">
+                Your order was refunded by the admin. The amount has been credited back to your original payment method. 
+                Depending on your bank, it may take 3-5 business days to reflect.
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {isCancelled && (
           <motion.div
@@ -304,15 +324,17 @@ export const OrderTracking = () => {
         )}
 
         {/* Connection status pill */}
-        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-6 ${
-          connected ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-        }`}>
-          <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
-          {connected ? 'Live tracking active' : 'Connecting to live tracking…'}
-        </div>
+        {!isCancelled && !isRefunded && !isDelivered && (
+          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-6 ${
+            connected ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`} />
+            {connected ? 'Live tracking active' : 'Connecting to live tracking…'}
+          </div>
+        )}
 
         {/* ETA Banner */}
-        {eta !== null && !isCancelled && !isDelivered && (
+        {eta !== null && !isCancelled && !isRefunded && !isDelivered && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -342,21 +364,21 @@ export const OrderTracking = () => {
               const Icon = step.icon;
               const isActive = i === currentStepIndex;
               const isDone = i < currentStepIndex;
-              const isCancelStep = isCancelled && i === 1;
+              const isCancelStep = (isCancelled || isRefunded) && i === 1;
               return (
                 <div key={step.id} className="flex flex-col items-center gap-2 z-10">
                   <motion.div
                     animate={{
-                      backgroundColor: isCancelStep ? '#ef4444' : (isDone || isActive ? '#0f766e' : '#f1f5f9'),
+                      backgroundColor: isCancelStep ? (isRefunded ? '#9333ea' : '#ef4444') : (isDone || isActive ? '#0f766e' : '#f1f5f9'),
                       scale: isActive ? 1.15 : 1,
-                      boxShadow: isActive ? (isCancelStep ? '0 0 0 4px rgba(239,68,68,0.2)' : '0 0 0 4px rgba(15,118,110,0.2)') : 'none',
+                      boxShadow: isActive ? (isCancelStep ? (isRefunded ? '0 0 0 4px rgba(147,51,234,0.2)' : '0 0 0 4px rgba(239,68,68,0.2)') : '0 0 0 4px rgba(15,118,110,0.2)') : 'none',
                     }}
                     transition={{ duration: 0.3 }}
                     className="w-10 h-10 rounded-full flex items-center justify-center"
                   >
                     <Icon size={18} className={isDone || isActive || isCancelStep ? 'text-white' : 'text-slate-400'} />
                   </motion.div>
-                  <span className={`text-xs font-medium text-center w-20 ${isActive ? (isCancelStep ? 'text-red-600 font-bold' : 'text-primary font-bold') : 'text-slate-500'}`}>
+                  <span className={`text-xs font-medium text-center w-20 ${isActive ? (isCancelStep ? (isRefunded ? 'text-purple-600 font-bold' : 'text-red-600 font-bold') : 'text-primary font-bold') : 'text-slate-500'}`}>
                     {step.label}
                   </span>
                 </div>
@@ -366,7 +388,7 @@ export const OrderTracking = () => {
         </div>
 
         {/* Live Map */}
-        {!isCancelled && (
+        {!isCancelled && !isRefunded && !isDelivered && (
           <div className="bg-white border border-slate-100 shadow-sm rounded-2xl p-4 mb-6">
             <div className="flex items-center gap-2 mb-3">
               <MapPin size={16} className="text-primary" />

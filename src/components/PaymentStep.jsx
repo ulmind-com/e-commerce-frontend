@@ -1,6 +1,6 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, CreditCard, Building2, Smartphone, Wallet, Banknote, Loader2, Lock, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, CreditCard, Building2, Smartphone, Wallet, Banknote, Loader2, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
 const API = import.meta.env.VITE_API_URL || 'https://e-commerce-backend-s2r8.onrender.com/api';
@@ -18,23 +18,31 @@ const loadRazorpay = () =>
   });
 
 // Accordion Section Component
-const AccordionSection = ({ id, title, icon: Icon, isOpen, onToggle, children, badge }) => (
-  <div className="border-b border-slate-100 last:border-0">
+const AccordionSection = ({ id, title, icon: Icon, isOpen, onToggle, children, badge, disabled, disabledReason }) => (
+  <div className={`border-b border-slate-100 last:border-0 ${disabled ? 'opacity-70 bg-slate-50' : ''}`}>
     <button
-      onClick={() => onToggle(id)}
-      className={`w-full flex items-center justify-between px-6 sm:px-8 py-5 text-left transition-colors hover:bg-slate-50 cursor-pointer`}
+      onClick={() => !disabled && onToggle(id)}
+      disabled={disabled}
+      className={`w-full flex flex-col px-6 sm:px-8 py-5 text-left transition-colors ${!disabled ? 'hover:bg-slate-50 cursor-pointer' : 'cursor-not-allowed'}`}
     >
-      <div className="flex items-center gap-3">
-        <Icon size={20} className={isOpen ? 'text-primary' : 'text-slate-400'} />
-        <span className={`text-[15px] font-semibold ${isOpen ? 'text-primary' : 'text-slate-800'}`}>{title}</span>
-        {badge && (
-          <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">{badge}</span>
-        )}
+      <div className="w-full flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Icon size={20} className={isOpen ? 'text-primary' : 'text-slate-400'} />
+          <span className={`text-[15px] font-semibold ${isOpen ? 'text-primary' : 'text-slate-800'}`}>{title}</span>
+          {badge && !disabled && (
+            <span className="text-[10px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">{badge}</span>
+          )}
+        </div>
+        {!disabled && (isOpen ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />)}
       </div>
-      {isOpen ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-400" />}
+      {disabled && disabledReason && (
+        <div className="mt-2 text-xs font-semibold text-red-500 flex items-center gap-1.5 ml-8">
+          <AlertCircle size={14} /> {disabledReason}
+        </div>
+      )}
     </button>
     <AnimatePresence>
-      {isOpen && (
+      {isOpen && !disabled && (
         <motion.div
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
@@ -51,14 +59,63 @@ const AccordionSection = ({ id, title, icon: Icon, isOpen, onToggle, children, b
   </div>
 );
 
-const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess, onBack }) => {
+const PaymentStep = ({ cartItems, total, currentLocation, user, token, gstDetails, onSuccess, onBack }) => {
   const [activeSection, setActiveSection] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState(null);
   const [selectedBank, setSelectedBank] = useState(null);
-  const [upiId, setUpiId] = useState('');
+  
+  // Payment Config State
+  const [paymentConfig, setPaymentConfig] = useState(null);
+  const [codStatus, setCodStatus] = useState({ allowed: true, reason: '' });
 
-  const payableAmount = total + 9;
+  const payableAmount = total + 9 + (paymentConfig?.cod_surcharge || 0);
+
+  useEffect(() => {
+    fetchPaymentSettings();
+  }, []);
+
+  const fetchPaymentSettings = async () => {
+    try {
+      const res = await axios.get(`${API}/settings/payments`);
+      const config = res.data;
+      setPaymentConfig(config);
+      
+      // Evaluate COD rules
+      if (!config.cod_enabled) {
+        setCodStatus({ allowed: false, reason: 'Cash on Delivery is currently disabled by Admin.' });
+        return;
+      }
+
+      if (total < config.cod_min_order) {
+        setCodStatus({ allowed: false, reason: `Minimum order value for COD is ₹${config.cod_min_order}.` });
+        return;
+      }
+
+      if (total > config.cod_max_order) {
+        setCodStatus({ allowed: false, reason: `Maximum order value for COD is ₹${config.cod_max_order}.` });
+        return;
+      }
+
+      // Time check
+      const now = new Date();
+      const currentHours = now.getHours();
+      const currentMinutes = now.getMinutes();
+      const currentTimeStr = `${currentHours.toString().padStart(2, '0')}:${currentMinutes.toString().padStart(2, '0')}`;
+      
+      if (currentTimeStr < config.cod_start_time || currentTimeStr > config.cod_end_time) {
+        setCodStatus({ allowed: false, reason: `COD is only available between ${config.cod_start_time} and ${config.cod_end_time}.` });
+        return;
+      }
+
+      setCodStatus({ allowed: true, reason: '' });
+
+    } catch (e) {
+      console.error('Failed to fetch payment config', e);
+      // Fallback to true if network fails
+      setCodStatus({ allowed: true, reason: '' });
+    }
+  };
 
   const toggleSection = (id) => {
     setActiveSection(activeSection === id ? null : id);
@@ -77,6 +134,7 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
       total_amount: total,
       payment_mode: paymentMode,
       delivery_location: currentLocation,
+      gst_details: gstDetails || null,
     };
 
     const res = await axios.post(`${API}/orders/`, orderPayload, {
@@ -352,13 +410,24 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
               </AccordionSection>
 
               {/* CASH ON DELIVERY */}
-              <AccordionSection id="cod" title="Cash on Delivery" icon={Banknote} isOpen={activeSection === 'cod'} onToggle={toggleSection}>
+              <AccordionSection 
+                id="cod" 
+                title="Cash on Delivery" 
+                icon={Banknote} 
+                isOpen={activeSection === 'cod'} 
+                onToggle={toggleSection}
+                disabled={!codStatus.allowed}
+                disabledReason={codStatus.reason}
+              >
                 <div className="space-y-4">
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-start gap-3">
                     <Banknote size={20} className="text-slate-400 mt-0.5 shrink-0" />
                     <div>
                       <p className="text-sm font-semibold text-slate-700">Pay when your order arrives</p>
                       <p className="text-xs text-slate-500 mt-1">Please keep exact change ready for a smooth delivery experience.</p>
+                      {paymentConfig?.cod_surcharge > 0 && (
+                        <p className="text-xs font-bold text-amber-600 mt-2">A Cash Handling Fee of ₹{paymentConfig.cod_surcharge} will be added.</p>
+                      )}
                     </div>
                   </div>
                   <button
@@ -434,9 +503,19 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
                     <span className="text-slate-500">Packaging</span>
                     <span className="text-slate-700 font-medium">₹9</span>
                   </div>
+                  {activeSection === 'cod' && paymentConfig?.cod_surcharge > 0 && (
+                    <div className="flex justify-between text-sm text-amber-600 font-medium">
+                      <span>COD Handling Fee</span>
+                      <span>₹{paymentConfig.cod_surcharge}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-base font-bold border-t border-dashed border-slate-200 pt-3 mt-3">
                     <span className="text-slate-900">Total</span>
-                    <span className="text-slate-900">₹{payableAmount.toFixed(0)}</span>
+                    <span className="text-slate-900">
+                      ₹{activeSection === 'cod' && paymentConfig?.cod_surcharge 
+                          ? (payableAmount + paymentConfig.cod_surcharge).toFixed(0) 
+                          : payableAmount.toFixed(0)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -457,3 +536,4 @@ const PaymentStep = ({ cartItems, total, currentLocation, user, token, onSuccess
 };
 
 export default PaymentStep;
+
