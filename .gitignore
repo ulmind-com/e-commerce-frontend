@@ -27,3 +27,8 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Local tooling & scratch files
+.claude/
+temp_*.txt
+fix_tables.py

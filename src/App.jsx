@@ -4,6 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, LayoutGrid, LogIn, LogOut, User, ChevronDown, Shield, MapPin, Heart, Search } from 'lucide-react';
 
 import Home from './pages/Home';
+import Deals from './pages/Deals';
+import NewArrivals from './pages/NewArrivals';
+import BestSellers from './pages/BestSellers';
+import FlashSale from './pages/FlashSale';
+import StoreLocator from './pages/StoreLocator';
+import Blog from './pages/Blog';
+import ContactUs from './pages/ContactUs';
 import { ProductDetails } from './pages/ProductDetails';
 import { Checkout } from './pages/Checkout';
 import { OrderTracking } from './pages/OrderTracking';
@@ -74,7 +81,8 @@ const Navbar = ({ onCartClick, onAuthClick, onLocationClick }) => {
   }, [currentLocation, onLocationClick]);
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-slate-100 shadow-sm h-20 px-4 md:px-8 flex items-center justify-between gap-4 md:gap-8">
+    <nav className="sticky top-0 z-50 bg-white border-b border-slate-100 shadow-sm flex flex-col w-full">
+      <div className="h-20 px-4 md:px-8 flex items-center justify-between gap-4 md:gap-8 w-full max-w-[1400px] mx-auto">
       
       {/* Left side: Logo & Location */}
       <div className="flex items-center gap-6 shrink-0">
@@ -246,6 +254,39 @@ const Navbar = ({ onCartClick, onAuthClick, onLocationClick }) => {
         </button>
 
       </div>
+      </div>
+      
+      {/* Bottom Links Row */}
+      <div className="border-t border-slate-100 hidden md:block w-full">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-8 h-12 flex items-center">
+          <ul className="flex items-center gap-8 text-sm font-bold text-slate-700 lg:ml-[304px]">
+            {[
+              { path: '/', label: 'Home', end: true },
+              { path: '/deals', label: 'Deals' },
+              { path: '/new-arrivals', label: 'New Arrivals' },
+              { path: '/best-sellers', label: 'Best Sellers' },
+              { path: '/flash-sale', label: 'Flash Sale' },
+              { path: '/store-locator', label: 'Store Locator' },
+              { path: '/blog', label: 'Blog' },
+              { path: '/contact', label: 'Contact Us' }
+            ].map(link => (
+              <li key={link.path}>
+                <NavLink 
+                  to={link.path}
+                  end={link.end}
+                  className={({isActive}) => 
+                    isActive 
+                      ? "text-[#0c831f] border-b-2 border-[#0c831f] pb-[13px]" 
+                      : "hover:text-[#0c831f] transition-colors pb-[13px] border-b-2 border-transparent"
+                  }
+                >
+                  {link.label}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </nav>
   );
 };
@@ -314,6 +355,13 @@ function App() {
           {/* Consumer Routes */}
           <Route element={<ConsumerLayout />}>
             <Route path="/" element={<Home />} />
+            <Route path="/deals" element={<Deals />} />
+            <Route path="/new-arrivals" element={<NewArrivals />} />
+            <Route path="/best-sellers" element={<BestSellers />} />
+            <Route path="/flash-sale" element={<FlashSale />} />
+            <Route path="/store-locator" element={<StoreLocator />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/contact" element={<ContactUs />} />
             <Route path="/products" element={<PLP />} />
             <Route path="/products/:id" element={<PDP />} />
             <Route path="/product/:id" element={<ProductDetails />} />

@@ -26,80 +26,83 @@ export const ProductCard = ({ product }) => {
   const productId = product._id || product.id;
 
   return (
-    <motion.div
-      style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={() => { x.set(0); y.set(0); }}
-      className="relative w-full rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-shadow duration-300 group overflow-hidden"
-    >
-      {/* Wishlist heart */}
-      <button
-        onClick={(e) => { e.preventDefault(); toggle(product); }}
-        className={`absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-all duration-200 ${
-          liked
-            ? 'bg-red-500 text-white scale-110'
-            : 'bg-white/90 text-slate-400 hover:text-red-400 hover:bg-white'
-        }`}
-      >
-        <Heart size={15} fill={liked ? 'currentColor' : 'none'} />
-      </button>
+    <div className="relative w-full rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-300 group flex flex-col h-full overflow-hidden">
+      
+      {/* Discount Badge & Wishlist */}
+      <div className="absolute top-0 left-0 w-full p-3 flex justify-between items-start z-10 pointer-events-none">
+        {product.discount_percentage ? (
+          <div className="bg-[#e53935] text-white text-[10px] font-bold px-1.5 py-0.5 rounded pointer-events-auto">
+            -{product.discount_percentage}%
+          </div>
+        ) : (
+          <div></div> // placeholder
+        )}
+        <button
+          onClick={(e) => { e.preventDefault(); toggle(product); }}
+          className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 pointer-events-auto ${
+            liked
+              ? 'bg-red-50 text-red-500 scale-110'
+              : 'bg-white text-slate-300 hover:text-red-400 hover:bg-slate-50'
+          }`}
+        >
+          <Heart size={14} fill={liked ? 'currentColor' : 'none'} />
+        </button>
+      </div>
 
       {/* Image */}
       <Link
         to={`/products/${productId}`}
         state={{ product }}
-        className="block relative h-44 bg-gradient-to-b from-slate-50 to-slate-100 overflow-hidden"
+        className="block relative pt-4 px-4 pb-2 bg-white"
       >
-        {images.length > 0 ? (
-          <img
-            src={images[0]}
-            alt={product.title}
-            className="w-full h-full object-contain p-3 group-hover:scale-108 transition-transform duration-500"
-            style={{ transform: 'translateZ(20px)' }}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl">🛒</div>
-        )}
-
-        {/* In stock badge */}
-        {product.stock_quantity > 0 && (
-          <span className="absolute bottom-2 left-2 text-[10px] font-bold bg-emerald-500 text-white px-2 py-0.5 rounded-full">
-            In Stock
-          </span>
-        )}
+        <div className="h-36 w-full flex items-center justify-center">
+          {images.length > 0 ? (
+            <img
+              src={images[0]}
+              alt={product.title}
+              className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="text-4xl text-slate-200">🛒</div>
+          )}
+        </div>
       </Link>
 
       {/* Info */}
-      <div className="p-3.5">
-        <Link to={`/products/${productId}`} state={{ product }}>
-          <h3 className="text-sm font-semibold text-slate-800 leading-snug line-clamp-2 hover:text-primary transition-colors mb-1">
+      <div className="p-3.5 flex flex-col flex-1 border-t border-slate-50">
+        <Link to={`/products/${productId}`} state={{ product }} className="flex-1">
+          <h3 className="text-[13px] font-semibold text-slate-800 leading-snug line-clamp-2 hover:text-[#0f5132] transition-colors mb-1">
             {product.title}
           </h3>
+          {product.weight && (
+            <p className="text-[11px] text-slate-500 mb-2">{product.weight}</p>
+          )}
         </Link>
 
-        {/* Rating stars */}
-        <div className="flex items-center gap-1 mb-2">
-          {[1,2,3,4].map(i => (
-            <Star key={i} size={10} fill="#f59e0b" className="text-amber-400" />
-          ))}
-          <Star size={10} className="text-slate-300" />
-          <span className="text-[10px] text-slate-400 ml-1">(4.2)</span>
-        </div>
+        <div className="mt-auto">
+          {/* Price */}
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="text-sm font-extrabold text-slate-900">₹{product.price}</span>
+            {(product.compare_at_price || Math.round(product.price * 1.15)) > product.price && (
+              <span className="text-[11px] font-medium text-slate-400 line-through">
+                ₹{product.compare_at_price || Math.round(product.price * 1.15)}
+              </span>
+            )}
+          </div>
 
-        {/* Price + Cart */}
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <span className="text-lg font-extrabold text-slate-800">₹{product.price}</span>
-            <span className="text-xs text-slate-400 line-through ml-1">
-              ₹{Math.round(product.price * 1.15)}
-            </span>
+          {/* Rating stars */}
+          <div className="flex items-center gap-0.5 mb-3">
+            {[1,2,3,4,5].map(i => (
+              <Star key={i} size={10} fill={i <= 4 ? "#f59e0b" : "#e2e8f0"} className={i <= 4 ? "text-amber-400" : "text-slate-200"} />
+            ))}
+            <span className="text-[10px] text-slate-400 ml-1">(42)</span>
           </div>
-          <div className="shrink-0">
-            <AddToCartButton product={product} />
-          </div>
+
+          {/* Add to Cart */}
+          <AddToCartButton product={product} fullWidth={true} />
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
