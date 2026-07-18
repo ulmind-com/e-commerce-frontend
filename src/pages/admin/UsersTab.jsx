@@ -88,7 +88,8 @@ export const UsersTab = ({ token }) => {
   return (
     <div className="space-y-6">
       <div className="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
-        <table className="min-w-full divide-y divide-slate-100">
+        <div className="w-full overflow-x-auto">
+<table className="min-w-full divide-y divide-slate-100">
           <thead className="bg-slate-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th>
@@ -146,6 +147,7 @@ export const UsersTab = ({ token }) => {
             ))}
           </tbody>
         </table>
+</div>
       </div>
 
       {/* Map Modal */}

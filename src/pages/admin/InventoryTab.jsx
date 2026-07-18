@@ -162,7 +162,8 @@ export const InventoryTab = ({ token }) => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-100">
+            <div className="w-full overflow-x-auto">
+<table className="min-w-full divide-y divide-slate-100">
               <thead className="bg-slate-50">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-16">Item</th>
@@ -237,6 +238,7 @@ export const InventoryTab = ({ token }) => {
                 })}
               </tbody>
             </table>
+</div>
           </div>
         )}
       </div>

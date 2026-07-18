@@ -349,7 +349,8 @@ export const ProductsTab = ({ token }) => {
         </div>
       ) : (
         <div className="bg-white shadow rounded-xl overflow-hidden border border-slate-100">
-          <table className="min-w-full divide-y divide-gray-200">
+          <div className="w-full overflow-x-auto">
+<table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Image</th>
@@ -437,6 +438,7 @@ export const ProductsTab = ({ token }) => {
               ))}
             </tbody>
           </table>
+</div>
           {data.length === 0 && (
             <div className="p-10 text-center text-gray-400">
               <Package size={32} className="mx-auto mb-2 text-gray-300" />

@@ -53,21 +53,21 @@ export const DashboardTab = ({ token, onNavigate }) => {
   return (
     <div className="space-y-6">
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3 md:gap-4">
         {statCards.map((card, idx) => {
           const isTodayOrders = card.title === "Today's Orders";
           return (
             <div 
               key={idx} 
-              onClick={() => isTodayOrders && onNavigate && onNavigate('today_orders')}
+              onClick={() => isTodayOrders && onNavigate && onNavigate('orders')}
               className={`bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center gap-4 ${isTodayOrders ? 'cursor-pointer hover:border-primary transition-colors' : ''}`}
             >
-              <div className={`w-12 h-12 rounded-xl text-white flex items-center justify-center shadow-sm shrink-0 ${card.color}`}>
-                <card.icon size={24} />
+              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl text-white flex items-center justify-center shadow-sm shrink-0 ${card.color}`}>
+                <card.icon className="w-5 h-5 md:w-6 md:h-6" />
               </div>
-              <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{card.title}</p>
-                <h3 className="text-2xl font-extrabold text-slate-800 mt-1">{card.value}</h3>
+              <div className="overflow-hidden">
+                <p className="text-[10px] md:text-xs font-semibold text-slate-400 uppercase tracking-wider truncate">{card.title}</p>
+                <h3 className="text-lg md:text-2xl font-extrabold text-slate-800 mt-0.5 md:mt-1 truncate">{card.value}</h3>
               </div>
             </div>
           );
@@ -126,8 +126,8 @@ export const DashboardTab = ({ token, onNavigate }) => {
           </div>
         )}
 
-        <div className="p-6 flex items-end gap-4">
-          <div>
+        <div className="p-6 flex flex-col sm:flex-row sm:items-end gap-4">
+          <div className="flex-1">
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
               User Cancellation Window (Minutes)
             </label>

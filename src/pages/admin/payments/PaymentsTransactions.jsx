@@ -80,7 +80,8 @@ export const PaymentsTransactions = ({ orders, token }) => {
       {/* Enterprise Data Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex-1">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-100">
+          <div className="w-full overflow-x-auto">
+<table className="min-w-full divide-y divide-slate-100">
             <thead className="bg-slate-50">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Transaction Details</th>
@@ -144,6 +145,7 @@ export const PaymentsTransactions = ({ orders, token }) => {
               )}
             </tbody>
           </table>
+</div>
         </div>
       </div>
 

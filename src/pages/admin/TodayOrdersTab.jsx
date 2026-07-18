@@ -58,7 +58,8 @@ export const TodayOrdersTab = ({ token }) => {
           <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold">{orders.length} Total</span>
         </div>
         
-        <table className="min-w-full divide-y divide-slate-100">
+        <div className="w-full overflow-x-auto">
+<table className="min-w-full divide-y divide-slate-100">
           <thead className="bg-slate-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Order ID & Date</th>
@@ -156,6 +157,7 @@ export const TodayOrdersTab = ({ token }) => {
             )}
           </tbody>
         </table>
+</div>
       </div>
     </div>
   );

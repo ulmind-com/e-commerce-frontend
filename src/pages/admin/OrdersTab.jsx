@@ -48,7 +48,8 @@ export const OrdersTab = ({ token }) => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-      <table className="min-w-full divide-y divide-slate-100">
+      <div className="w-full overflow-x-auto">
+<table className="min-w-full divide-y divide-slate-100">
         <thead className="bg-slate-50">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Order ID & Date</th>
@@ -115,6 +116,7 @@ export const OrdersTab = ({ token }) => {
           )}
         </tbody>
       </table>
+</div>
     </div>
   );
 };
